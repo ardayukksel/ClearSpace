@@ -1,4 +1,11 @@
 package com.example.clearspace.data.model
 
-class Challenge {
-}
+data class Challenge(
+    val challengeId: String,
+    val type: ChallengeType,
+    val title: String,
+    val description: String,
+    val difficulty: Int,
+    val rewardPoints: Int,
+    var isEnabled: Boolean = true
+)
