@@ -1,27 +1,35 @@
 package com.example.clearspace.service
 
 import com.example.clearspace.data.model.User
+import com.example.clearspace.data.repository.UserRepository
 import java.util.UUID
 
-class AuthService {
+class AuthService(
+    private val userRepository: UserRepository = UserRepository()
+) {
 
-    private val users = mutableListOf<User>()
     private var currentUser: User? = null
 
     fun register(name: String, email: String): User {
+        val existingUser = userRepository.getUserByEmail(email)
+        if (existingUser != null) {
+            currentUser = existingUser
+            return existingUser
+        }
+
         val user = User(
             userId = UUID.randomUUID().toString(),
             name = name,
             email = email
         )
 
-        users.add(user)
+        userRepository.addUser(user)
         currentUser = user
         return user
     }
 
     fun login(email: String): User? {
-        val user = users.find { it.email.equals(email, ignoreCase = true) }
+        val user = userRepository.getUserByEmail(email)
         currentUser = user
         return user
     }
@@ -35,6 +43,10 @@ class AuthService {
     }
 
     fun getAllUsers(): List<User> {
-        return users
+        return userRepository.getAllUsers()
+    }
+
+    fun getUserById(userId: String): User? {
+        return userRepository.getUserById(userId)
     }
 }

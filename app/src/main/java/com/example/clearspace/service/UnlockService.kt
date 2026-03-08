@@ -7,12 +7,12 @@ import com.example.clearspace.data.model.RequestStatus
 import com.example.clearspace.data.model.UnlockApproval
 import com.example.clearspace.data.model.UnlockRequest
 import com.example.clearspace.data.model.User
+import com.example.clearspace.data.repository.UnlockRequestRepository
 import java.util.UUID
 
-class UnlockService {
-
-    private val unlockRequests = mutableListOf<UnlockRequest>()
-    private val unlockApprovals = mutableListOf<UnlockApproval>()
+class UnlockService(
+    private val unlockRequestRepository: UnlockRequestRepository = UnlockRequestRepository()
+) {
 
     fun createUnlockRequest(
         user: User,
@@ -21,6 +21,7 @@ class UnlockService {
         durationMinutes: Int = 30
     ): UnlockRequest {
         val now = System.currentTimeMillis()
+
         val request = UnlockRequest(
             requestId = UUID.randomUUID().toString(),
             user = user,
@@ -31,11 +32,15 @@ class UnlockService {
             status = RequestStatus.PENDING
         )
 
-        unlockRequests.add(request)
+        unlockRequestRepository.addUnlockRequest(request)
         return request
     }
 
-    fun addApproval(request: UnlockRequest, friend: Friend, decision: ApprovalDecision): UnlockApproval {
+    fun addApproval(
+        request: UnlockRequest,
+        friend: Friend,
+        decision: ApprovalDecision
+    ): UnlockApproval {
         val approval = UnlockApproval(
             approvalId = UUID.randomUUID().toString(),
             request = request,
@@ -44,17 +49,19 @@ class UnlockService {
             decision = decision
         )
 
-        unlockApprovals.add(approval)
+        unlockRequestRepository.addApproval(approval)
         updateRequestStatus(request)
+        unlockRequestRepository.updateUnlockRequest(request)
+
         return approval
     }
 
     fun getApprovalsForRequest(request: UnlockRequest): List<UnlockApproval> {
-        return unlockApprovals.filter { it.request.requestId == request.requestId }
+        return unlockRequestRepository.getApprovalsForRequest(request.requestId)
     }
 
     fun getRequestsForUser(user: User): List<UnlockRequest> {
-        return unlockRequests.filter { it.user.userId == user.userId }
+        return unlockRequestRepository.getUnlockRequestsForUser(user.userId)
     }
 
     fun isRequestApproved(request: UnlockRequest): Boolean {
@@ -68,22 +75,23 @@ class UnlockService {
     }
 
     fun updateRequestStatus(request: UnlockRequest) {
-        when {
-            isRequestExpired(request) -> request.status = RequestStatus.EXPIRED
-            isRequestApproved(request) -> request.status = RequestStatus.APPROVED
-            else -> request.status = RequestStatus.PENDING
+        request.status = when {
+            isRequestExpired(request) -> RequestStatus.EXPIRED
+            isRequestApproved(request) -> RequestStatus.APPROVED
+            else -> RequestStatus.PENDING
         }
     }
 
     fun rejectRequest(request: UnlockRequest) {
         request.status = RequestStatus.REJECTED
+        unlockRequestRepository.updateUnlockRequest(request)
     }
 
     fun getAllRequests(): List<UnlockRequest> {
-        return unlockRequests
+        return unlockRequestRepository.getAllUnlockRequests()
     }
 
     fun getAllApprovals(): List<UnlockApproval> {
-        return unlockApprovals
+        return unlockRequestRepository.getAllApprovals()
     }
 }

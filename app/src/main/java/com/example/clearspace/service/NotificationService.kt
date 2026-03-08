@@ -4,11 +4,12 @@ import com.example.clearspace.data.model.Notification
 import com.example.clearspace.data.model.NotificationType
 import com.example.clearspace.data.model.UnlockRequest
 import com.example.clearspace.data.model.User
+import com.example.clearspace.data.repository.NotificationRepository
 import java.util.UUID
 
-class NotificationService {
-
-    private val notifications = mutableListOf<Notification>()
+class NotificationService(
+    private val notificationRepository: NotificationRepository = NotificationRepository()
+) {
 
     fun createNotification(
         user: User,
@@ -26,7 +27,7 @@ class NotificationService {
             readAt = null
         )
 
-        notifications.add(notification)
+        notificationRepository.addNotification(notification)
         return notification
     }
 
@@ -59,13 +60,18 @@ class NotificationService {
 
     fun markAsRead(notification: Notification) {
         notification.readAt = System.currentTimeMillis()
+        notificationRepository.updateNotification(notification)
     }
 
     fun getNotificationsForUser(user: User): List<Notification> {
-        return notifications.filter { it.user.userId == user.userId }
+        return notificationRepository.getNotificationsForUser(user.userId)
+    }
+
+    fun getUnreadNotificationsForUser(user: User): List<Notification> {
+        return notificationRepository.getUnreadNotificationsForUser(user.userId)
     }
 
     fun getAllNotifications(): List<Notification> {
-        return notifications
+        return notificationRepository.getAllNotifications()
     }
 }

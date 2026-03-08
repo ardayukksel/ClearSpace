@@ -5,57 +5,68 @@ import com.example.clearspace.data.model.Challenge
 import com.example.clearspace.data.model.ChallengeAttempt
 import com.example.clearspace.data.model.ChallengeType
 import com.example.clearspace.data.model.Session
+import com.example.clearspace.data.repository.ChallengeRepository
 import java.util.UUID
 
-class ChallengeService {
+class ChallengeService(
+    private val challengeRepository: ChallengeRepository = ChallengeRepository()
+) {
 
-    private val challengeLibrary = listOf(
-        Challenge(
-            challengeId = "c1",
-            type = ChallengeType.BREATHING,
-            title = "Take 3 Deep Breaths",
-            description = "Pause and take three slow deep breaths before continuing.",
-            difficulty = 1,
-            rewardPoints = 5,
-            isEnabled = true
-        ),
-        Challenge(
-            challengeId = "c2",
-            type = ChallengeType.MATH,
-            title = "Quick Math Check",
-            description = "Answer a simple math question to continue.",
-            difficulty = 2,
-            rewardPoints = 10,
-            isEnabled = true
-        ),
-        Challenge(
-            challengeId = "c3",
-            type = ChallengeType.REFLECTION,
-            title = "Reflect Before Scrolling",
-            description = "State whether your app usage is intentional or mindless.",
-            difficulty = 1,
-            rewardPoints = 5,
-            isEnabled = true
-        ),
-        Challenge(
-            challengeId = "c4",
-            type = ChallengeType.COUNTDOWN,
-            title = "10 Second Pause",
-            description = "Wait 10 seconds and reflect before continuing.",
-            difficulty = 1,
-            rewardPoints = 5,
-            isEnabled = true
+    init {
+        if (challengeRepository.getAllChallenges().isEmpty()) {
+            seedDefaultChallenges()
+        }
+    }
+
+    private fun seedDefaultChallenges() {
+        val defaultChallenges = listOf(
+            Challenge(
+                challengeId = "c1",
+                type = ChallengeType.BREATHING,
+                title = "Take 3 Deep Breaths",
+                description = "Pause and take three slow deep breaths before continuing.",
+                difficulty = 1,
+                rewardPoints = 5,
+                isEnabled = true
+            ),
+            Challenge(
+                challengeId = "c2",
+                type = ChallengeType.MATH,
+                title = "Quick Math Check",
+                description = "Answer a simple math question to continue.",
+                difficulty = 2,
+                rewardPoints = 10,
+                isEnabled = true
+            ),
+            Challenge(
+                challengeId = "c3",
+                type = ChallengeType.REFLECTION,
+                title = "Reflect Before Scrolling",
+                description = "State whether your app usage is intentional or mindless.",
+                difficulty = 1,
+                rewardPoints = 5,
+                isEnabled = true
+            ),
+            Challenge(
+                challengeId = "c4",
+                type = ChallengeType.COUNTDOWN,
+                title = "10 Second Pause",
+                description = "Wait 10 seconds and reflect before continuing.",
+                difficulty = 1,
+                rewardPoints = 5,
+                isEnabled = true
+            )
         )
-    )
 
-    private val attempts = mutableListOf<ChallengeAttempt>()
+        challengeRepository.addChallenges(defaultChallenges)
+    }
 
     fun getAllChallenges(): List<Challenge> {
-        return challengeLibrary
+        return challengeRepository.getAllChallenges()
     }
 
     fun getEnabledChallenges(): List<Challenge> {
-        return challengeLibrary.filter { it.isEnabled }
+        return challengeRepository.getEnabledChallenges()
     }
 
     fun getRandomChallenge(): Challenge {
@@ -74,7 +85,7 @@ class ChallengeService {
             pointsAwarded = 0
         )
 
-        attempts.add(attempt)
+        challengeRepository.addChallengeAttempt(attempt)
         return attempt
     }
 
@@ -103,10 +114,10 @@ class ChallengeService {
     }
 
     fun getAttemptsForSession(session: Session): List<ChallengeAttempt> {
-        return attempts.filter { it.session.sessionId == session.sessionId }
+        return challengeRepository.getAttemptsForSession(session.sessionId)
     }
 
     fun getAllAttempts(): List<ChallengeAttempt> {
-        return attempts
+        return challengeRepository.getAllChallengeAttempts()
     }
 }
