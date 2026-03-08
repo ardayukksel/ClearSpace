@@ -4,11 +4,12 @@ import com.example.clearspace.data.model.RegulatedApp
 import com.example.clearspace.data.model.Session
 import com.example.clearspace.data.model.SessionStatus
 import com.example.clearspace.data.model.User
+import com.example.clearspace.data.repository.SessionRepository
 import java.util.UUID
 
-class SessionService {
-
-    private val sessions = mutableListOf<Session>()
+class SessionService(
+    private val sessionRepository: SessionRepository = SessionRepository()
+) {
 
     fun startSession(user: User, app: RegulatedApp): Session {
         val session = Session(
@@ -23,43 +24,46 @@ class SessionService {
             status = SessionStatus.ACTIVE
         )
 
-        sessions.add(session)
+        sessionRepository.addSession(session)
         return session
     }
 
     fun endSession(session: Session): Session {
         val endTime = System.currentTimeMillis()
-        val durationSeconds = ((endTime - session.startTime) / 1000).toInt()
+
+        if (session.durationSeconds <= 0) {
+            session.durationSeconds = ((endTime - session.startTime) / 1000).toInt()
+        }
 
         session.endTime = endTime
-        session.durationSeconds = durationSeconds
         session.status = SessionStatus.ENDED
 
+        sessionRepository.updateSession(session)
         return session
     }
 
     fun calculateDurationSeconds(session: Session): Int {
+        if (session.durationSeconds > 0) {
+            return session.durationSeconds
+        }
+
         val end = session.endTime ?: System.currentTimeMillis()
         return ((end - session.startTime) / 1000).toInt()
     }
 
     fun getAllSessions(): List<Session> {
-        return sessions
+        return sessionRepository.getAllSessions()
     }
 
     fun getSessionsForUser(user: User): List<Session> {
-        return sessions.filter { it.user.userId == user.userId }
+        return sessionRepository.getSessionsForUser(user.userId)
     }
 
     fun getActiveSessions(): List<Session> {
-        return sessions.filter { it.status == SessionStatus.ACTIVE }
+        return sessionRepository.getActiveSessions()
     }
 
-    fun getActiveSessionForApp(user: User, app: RegulatedApp): Session? {
-        return sessions.find {
-            it.user.userId == user.userId &&
-                    it.app.packageName == app.packageName &&
-                    it.status == SessionStatus.ACTIVE
-        }
+    fun getActiveSessionForUser(user: User): Session? {
+        return sessionRepository.getActiveSessionForUser(user.userId)
     }
 }
