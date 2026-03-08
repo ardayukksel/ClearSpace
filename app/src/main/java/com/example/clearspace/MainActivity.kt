@@ -13,14 +13,13 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.clearspace.data.model.ApprovalDecision
-import com.example.clearspace.data.model.Friend
-import com.example.clearspace.data.model.FriendStatus
 import com.example.clearspace.data.model.RegulatedApp
+import com.example.clearspace.manager.AppUsageManager
+import com.example.clearspace.manager.FriendManager
+import com.example.clearspace.manager.LimitManager
 import com.example.clearspace.service.AuthService
-import com.example.clearspace.service.BreachDetectionService
 import com.example.clearspace.service.ChallengeService
 import com.example.clearspace.service.NotificationService
-import com.example.clearspace.service.SessionService
 import com.example.clearspace.service.UnlockService
 
 class MainActivity : ComponentActivity() {
@@ -48,11 +47,12 @@ class MainActivity : ComponentActivity() {
 
     private fun runBackendDemo(): String {
         val authService = AuthService()
-        val sessionService = SessionService()
-        val breachDetectionService = BreachDetectionService()
+        val appUsageManager = AppUsageManager()
+        val limitManager = LimitManager()
         val challengeService = ChallengeService()
         val unlockService = UnlockService()
         val notificationService = NotificationService()
+        val friendManager = FriendManager()
 
         val log = StringBuilder()
 
@@ -84,64 +84,67 @@ class MainActivity : ComponentActivity() {
         log.appendLine("Package: ${app.packageName}")
         log.appendLine()
 
-        // 3. Start session
-        val session = sessionService.startSession(user, app)
+        // 3. Start session via manager
+        val session = appUsageManager.beginUsageSession(user, app)
         log.appendLine("Session started:")
         log.appendLine("Session ID: ${session.sessionId}")
         log.appendLine("Status: ${session.status}")
         log.appendLine()
 
-        // 4. Simulate time passing by forcing duration
-        session.durationSeconds = 700 // 11 min 40 sec
+        // 4. Simulate time passing
+        session.durationSeconds = 700
         log.appendLine("Simulated session duration: ${session.durationSeconds} seconds")
         log.appendLine()
 
-        // 5. Breach detection
-        val breached = breachDetectionService.hasSessionLimitBeenBreached(session)
-        log.appendLine("Session limit breached? $breached")
+        // 5. Check limit via manager
+        val sessionBreached = appUsageManager.isSessionOverLimit(session)
+        log.appendLine("Session limit breached? $sessionBreached")
 
-        if (breached) {
-            breachDetectionService.markSessionBreach(session)
+        if (sessionBreached) {
+            session.breachedSessionLimit = true
             log.appendLine("Session marked as breached.")
         }
         log.appendLine()
 
-        // 6. Create challenge
+        // 6. Challenge flow
         val challenge = challengeService.getRandomChallenge()
         val attempt = challengeService.createChallengeAttempt(session, challenge)
+
         log.appendLine("Challenge assigned:")
         log.appendLine("Title: ${challenge.title}")
         log.appendLine("Type: ${challenge.type}")
         log.appendLine()
 
-        // 7. Complete challenge
         challengeService.completeChallengeAttempt(attempt)
         user.points += attempt.pointsAwarded
+
         log.appendLine("Challenge completed:")
         log.appendLine("Outcome: ${attempt.outcome}")
         log.appendLine("Points awarded: ${attempt.pointsAwarded}")
         log.appendLine("User total points: ${user.points}")
         log.appendLine()
 
-        // 8. End session
-        sessionService.endSession(session)
+        // 7. End session via manager
+        appUsageManager.endUsageSession(session)
         log.appendLine("Session ended:")
         log.appendLine("Status: ${session.status}")
         log.appendLine("Final duration: ${session.durationSeconds} seconds")
         log.appendLine()
 
-        // 9. Simulate accountability
-        val friend = Friend(
-            friendId = "f1",
+        // 8. Friend flow via manager
+        val friend = friendManager.addFriend(
             user = user,
             displayName = "Lucas",
-            contactHandle = "lucas@email.com",
-            status = FriendStatus.ACCEPTED
+            contactHandle = "lucas@email.com"
         )
+        friendManager.acceptFriend(friend)
+
         log.appendLine("Friend added:")
         log.appendLine("Friend name: ${friend.displayName}")
+        log.appendLine("Friend status: ${friend.status}")
         log.appendLine()
 
+        // 9. Unlock flow
         val unlockRequest = unlockService.createUnlockRequest(
             user = user,
             app = app,
@@ -169,6 +172,18 @@ class MainActivity : ComponentActivity() {
         log.appendLine("Notification created:")
         log.appendLine("Title: ${notification.title}")
         log.appendLine("Body: ${notification.body}")
+        log.appendLine()
+
+        // 11. Daily limit / escalation checks
+        val userSessions = appUsageManager.run {
+            listOf(session)
+        }
+
+        val dailyLimitReached = limitManager.hasDailyLimitBeenReached(user, userSessions)
+        val shouldEscalate = limitManager.shouldEscalate(user, userSessions)
+
+        log.appendLine("Daily limit reached? $dailyLimitReached")
+        log.appendLine("Should escalate? $shouldEscalate")
         log.appendLine()
 
         log.appendLine("=== DEMO COMPLETE ===")
