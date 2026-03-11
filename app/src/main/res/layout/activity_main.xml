@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tv_selected_app"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Target App: None"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btn_select_app"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Choose App to Block"
+        android:layout_marginBottom="32dp"/>
+
+    <Switch
+        android:id="@+id/switch_target_app"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="Enable Blocking"
+        android:textSize="18sp"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:id="@+id/tv_session_limit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Session Limit: 10 min"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp"/>
+
+    <SeekBar
+        android:id="@+id/seekbar_session"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="60"
+        android:progress="10"
+        android:layout_marginBottom="32dp"/>
+
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Save Settings"
+        android:textSize="18sp"/>
+
+</LinearLayout>
