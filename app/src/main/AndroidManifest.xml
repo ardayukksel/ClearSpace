@@ -48,6 +48,7 @@
         <activity
             android:name=".ChallengeActivity"
             android:exported="false" />
+
         <activity
             android:name=".DashboardActivity"
             android:exported="false" />
@@ -55,8 +56,10 @@
         <service
             android:name=".OverlayService"
             android:exported="false" />
+
         <service
             android:name=".AppMonitorService"
+            android:exported="false"
             android:foregroundServiceType="dataSync" />
 
         <receiver
