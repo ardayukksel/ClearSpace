@@ -50,12 +50,8 @@ class MainActivity : AppCompatActivity() {
         tvSelectedApp.text = "Target App: $savedAppName"
 
         updateSliderState(savedSwitchState)
-
-        if (!PermissionUtils.hasUsageStatsPermission(this)) {
-            PermissionUtils.requestUsageStatsPermission(this)
-        } else if (!PermissionUtils.hasOverlayPermission(this)) {
-            PermissionUtils.requestOverlayPermission(this)
-        }
+        checkCorePermissionsOnLaunch()
+        maybeRemindAccessibilityOnLaunch()
 
         btnSelectApp.setOnClickListener {
             showAppPicker()
@@ -92,6 +88,24 @@ class MainActivity : AppCompatActivity() {
         seekbarSession.progress = savedTimeLimit
         switchTarget.isChecked = savedEnabled
         updateSliderState(savedEnabled)
+    }
+
+    private fun checkCorePermissionsOnLaunch() {
+        if (!PermissionUtils.hasUsageStatsPermission(this)) {
+            PermissionUtils.requestUsageStatsPermission(this)
+        } else if (!PermissionUtils.hasOverlayPermission(this)) {
+            PermissionUtils.requestOverlayPermission(this)
+        }
+    }
+
+    private fun maybeRemindAccessibilityOnLaunch() {
+        if (!PermissionUtils.hasAccessibilityPermission(this)) {
+            Toast.makeText(
+                this,
+                "Accessibility permission is recommended for stronger blocking.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     private fun showAppPicker() {
@@ -157,15 +171,40 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        if (isTargetSelected && !PermissionUtils.hasAccessibilityPermission(this)) {
+            showAccessibilityRecommendationDialog(
+                onContinueAnyway = {
+                    startMonitoringWithCurrentSettings(selectedTime, isTargetSelected)
+                }
+            )
+            return
+        }
+
+        startMonitoringWithCurrentSettings(selectedTime, isTargetSelected)
+    }
+
+    private fun showAccessibilityRecommendationDialog(onContinueAnyway: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle("Recommended Permission")
+            .setMessage(
+                "Accessibility permission is recommended for faster and stronger blocking. " +
+                        "You can continue without it, but enforcement may be less responsive."
+            )
+            .setPositiveButton("Open Settings") { _, _ ->
+                PermissionUtils.requestAccessibilityPermission(this)
+            }
+            .setNegativeButton("Continue Anyway") { _, _ ->
+                onContinueAnyway()
+            }
+            .show()
+    }
+
+    private fun startMonitoringWithCurrentSettings(selectedTime: Int, isTargetSelected: Boolean) {
         with(sharedPref.edit()) {
             putBoolean(AppMonitorService.KEY_TARGET_ENABLED, isTargetSelected)
             putInt(AppMonitorService.KEY_TIME_LIMIT, selectedTime)
-
-            // important: whenever user saves settings manually,
-            // reset stale lock/challenge state
             putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
             putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
-
             apply()
         }
 
