@@ -21,6 +21,7 @@ class OverlayService : Service() {
     private lateinit var windowManager: WindowManager
     private var overlayView: View? = null
     private var isOverlayAdded = false
+    private var isTransitioningToChallenge = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -37,7 +38,7 @@ class OverlayService : Service() {
     }
 
     private fun showOverlayIfNeeded() {
-        if (overlayView != null || isOverlayAdded) return
+        if (overlayView != null || isOverlayAdded || isTransitioningToChallenge) return
 
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_view, null)
 
@@ -61,6 +62,11 @@ class OverlayService : Service() {
         val btnChallenge = overlayView?.findViewById<Button>(R.id.btn_continue_challenge)
 
         btnChallenge?.setOnClickListener {
+            if (isTransitioningToChallenge) return@setOnClickListener
+
+            isTransitioningToChallenge = true
+            btnChallenge.isEnabled = false
+
             val sharedPref = getSharedPreferences(
                 AppMonitorService.PREFS_NAME,
                 Context.MODE_PRIVATE
@@ -69,6 +75,10 @@ class OverlayService : Service() {
             sharedPref.edit()
                 .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, true)
                 .apply()
+
+            // Hide and remove overlay immediately to avoid a visual flash
+            // when ChallengeActivity comes to the foreground.
+            removeOverlayImmediately()
 
             val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
                 addFlags(
@@ -79,9 +89,23 @@ class OverlayService : Service() {
             }
             startActivity(challengeIntent)
 
-            // Hide overlay while challenge screen is on top.
             stopSelf()
         }
+    }
+
+    private fun removeOverlayImmediately() {
+        overlayView?.let { view ->
+            view.visibility = View.GONE
+
+            if (isOverlayAdded) {
+                try {
+                    windowManager.removeViewImmediate(view)
+                } catch (_: Exception) {
+                }
+                isOverlayAdded = false
+            }
+        }
+        overlayView = null
     }
 
     override fun onDestroy() {
@@ -89,12 +113,16 @@ class OverlayService : Service() {
 
         overlayView?.let { view ->
             if (isOverlayAdded) {
-                windowManager.removeView(view)
+                try {
+                    windowManager.removeViewImmediate(view)
+                } catch (_: Exception) {
+                }
                 isOverlayAdded = false
             }
         }
 
         overlayView = null
+        isTransitioningToChallenge = false
         isRunning = false
     }
 }

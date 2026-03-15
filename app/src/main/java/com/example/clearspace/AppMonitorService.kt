@@ -161,15 +161,27 @@ class AppMonitorService : Service() {
         }
 
         if (isLocked) {
-            if (effectiveForegroundApp == targetAppPackage) {
-                Log.d(TAG, "Blocked target app detected while locked. Enforcing overlay.")
-                ensureOverlayShowing()
+            // IMPORTANT:
+            // Once challenge has started, challenge flow must take priority over overlay.
+            // Otherwise the service may briefly still think the target app is foreground
+            // and recreate the overlay, causing the "double click" issue.
+            if (isChallengeActive) {
+                stopOverlayIfNeeded()
+
+                if (effectiveForegroundApp != ownPackage) {
+                    Log.d(TAG, "Challenge is active and user is outside ClearSpace. Relaunching challenge.")
+                    launchChallengeActivity()
+                } else {
+                    Log.d(TAG, "Challenge is active and ClearSpace is already foreground.")
+                }
+
+                resetSessionOnly()
                 return
             }
 
-            if (isChallengeActive && effectiveForegroundApp != ownPackage) {
-                Log.d(TAG, "User left challenge flow while still locked. Relaunching challenge.")
-                launchChallengeActivity()
+            if (effectiveForegroundApp == targetAppPackage) {
+                Log.d(TAG, "Blocked target app detected while locked. Enforcing overlay.")
+                ensureOverlayShowing()
                 return
             }
 
