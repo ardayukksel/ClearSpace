@@ -14,6 +14,10 @@ import android.widget.Button
 
 class OverlayService : Service() {
 
+    companion object {
+        var isRunning: Boolean = false
+    }
+
     private lateinit var windowManager: WindowManager
     private var overlayView: View? = null
     private var isOverlayAdded = false
@@ -22,12 +26,18 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
+        isRunning = true
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        showOverlayIfNeeded()
+    }
 
-        if (overlayView != null || isOverlayAdded) {
-            return
-        }
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        showOverlayIfNeeded()
+        return START_STICKY
+    }
+
+    private fun showOverlayIfNeeded() {
+        if (overlayView != null || isOverlayAdded) return
 
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_view, null)
 
@@ -51,11 +61,25 @@ class OverlayService : Service() {
         val btnChallenge = overlayView?.findViewById<Button>(R.id.btn_continue_challenge)
 
         btnChallenge?.setOnClickListener {
+            val sharedPref = getSharedPreferences(
+                AppMonitorService.PREFS_NAME,
+                Context.MODE_PRIVATE
+            )
+
+            sharedPref.edit()
+                .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, true)
+                .apply()
+
             val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                )
             }
             startActivity(challengeIntent)
 
+            // Hide overlay while challenge screen is on top.
             stopSelf()
         }
     }
@@ -71,5 +95,6 @@ class OverlayService : Service() {
         }
 
         overlayView = null
+        isRunning = false
     }
 }

@@ -47,7 +47,9 @@
 
         <activity
             android:name=".ChallengeActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask" />
 
         <activity
             android:name=".DashboardActivity"

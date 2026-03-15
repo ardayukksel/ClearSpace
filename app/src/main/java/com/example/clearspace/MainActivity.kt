@@ -85,10 +85,13 @@ class MainActivity : AppCompatActivity() {
 
         val savedAppName = sharedPref.getString(AppMonitorService.KEY_TARGET_APP_NAME, "None")
         val savedTimeLimit = sharedPref.getInt(AppMonitorService.KEY_TIME_LIMIT, 10).coerceAtLeast(1)
+        val savedEnabled = sharedPref.getBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
 
         tvSelectedApp.text = "Target App: $savedAppName"
         tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
         seekbarSession.progress = savedTimeLimit
+        switchTarget.isChecked = savedEnabled
+        updateSliderState(savedEnabled)
     }
 
     private fun showAppPicker() {
@@ -157,8 +160,16 @@ class MainActivity : AppCompatActivity() {
         with(sharedPref.edit()) {
             putBoolean(AppMonitorService.KEY_TARGET_ENABLED, isTargetSelected)
             putInt(AppMonitorService.KEY_TIME_LIMIT, selectedTime)
+
+            // important: whenever user saves settings manually,
+            // reset stale lock/challenge state
+            putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
+            putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
+
             apply()
         }
+
+        stopService(Intent(this, OverlayService::class.java))
 
         val monitorIntent = Intent(this, AppMonitorService::class.java)
 

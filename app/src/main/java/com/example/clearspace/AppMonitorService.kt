@@ -32,12 +32,13 @@ class AppMonitorService : Service() {
         const val KEY_TIME_LIMIT = "timeLimit"
         const val KEY_TARGET_APP_NAME = "targetAppName"
         const val KEY_TARGET_APP_PACKAGE = "targetAppPackage"
+        const val KEY_IS_LOCKED = "isLocked"
+        const val KEY_CHALLENGE_ACTIVE = "isChallengeActive"
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private val checkInterval = 2000L
+    private val checkInterval = 1000L
 
-    private var overlayShown = false
     private var sessionStartTime = 0L
     private var lastKnownApp = ""
 
@@ -107,31 +108,74 @@ class AppMonitorService : Service() {
 
     private fun checkAppUsageAndBlock() {
         if (!PermissionUtils.hasUsageStatsPermission(this) || !PermissionUtils.hasOverlayPermission(this)) {
-            Log.w(TAG, "Required permissions missing. Stopping active blocking state.")
-            resetTrackingState()
+            Log.w(TAG, "Required permissions missing. Cannot enforce block properly.")
+            resetSessionOnly()
             stopOverlayIfNeeded()
             return
         }
 
         val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
         val isEnabled = sharedPref.getBoolean(KEY_TARGET_ENABLED, false)
         val timeLimitMinutes = sharedPref.getInt(KEY_TIME_LIMIT, 10).coerceAtLeast(1)
         val targetAppPackage = sharedPref.getString(KEY_TARGET_APP_PACKAGE, "") ?: ""
+        val isLocked = sharedPref.getBoolean(KEY_IS_LOCKED, false)
+        val isChallengeActive = sharedPref.getBoolean(KEY_CHALLENGE_ACTIVE, false)
 
         if (!isEnabled || targetAppPackage.isBlank()) {
             Log.d(TAG, "Monitoring disabled or no target app selected.")
-            resetTrackingState()
+            resetAllTrackingState()
             stopOverlayIfNeeded()
             return
         }
 
         val currentForegroundApp = getCurrentForegroundApp()
 
+        // IMPORTANT:
+        // UsageEvents may return blank when no new foreground event occurred.
+        // So we keep the last known meaningful foreground app.
         if (currentForegroundApp.isNotBlank()) {
             lastKnownApp = currentForegroundApp
         }
 
-        if (lastKnownApp == targetAppPackage) {
+        val effectiveForegroundApp = lastKnownApp
+        val ownPackage = packageName
+
+        Log.d(
+            TAG,
+            "Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive"
+        )
+
+        if (effectiveForegroundApp.isBlank()) {
+            Log.d(TAG, "No known foreground app yet.")
+            return
+        }
+
+        // =========================================================
+        // 1. HARD ENFORCEMENT WHEN LOCKED
+        // =========================================================
+        if (isLocked) {
+            if (effectiveForegroundApp == targetAppPackage) {
+                Log.d(TAG, "Blocked target app detected while locked. Enforcing overlay.")
+                ensureOverlayShowing()
+                return
+            }
+
+            if (isChallengeActive && effectiveForegroundApp != ownPackage) {
+                Log.d(TAG, "User left challenge flow while still locked. Relaunching challenge.")
+                launchChallengeActivity()
+                return
+            }
+
+            // While locked, do not wipe lock state just because user navigated away.
+            resetSessionOnly()
+            return
+        }
+
+        // =========================================================
+        // 2. NORMAL SESSION TRACKING
+        // =========================================================
+        if (effectiveForegroundApp == targetAppPackage) {
             if (sessionStartTime == 0L) {
                 sessionStartTime = System.currentTimeMillis()
                 Log.d(TAG, "Target app session started for package: $targetAppPackage")
@@ -142,25 +186,46 @@ class AppMonitorService : Service() {
 
             Log.d(
                 TAG,
-                "Target app in foreground. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s"
+                "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s"
             )
 
-            if (currentSessionTimeMs >= limitMs && !overlayShown) {
-                overlayShown = true
-                Log.d(TAG, "Session limit reached. Launching overlay.")
+            if (currentSessionTimeMs >= limitMs) {
+                Log.d(TAG, "Session limit reached. Locking app and launching overlay.")
 
-                val overlayIntent = Intent(this, OverlayService::class.java)
-                startService(overlayIntent)
+                sharedPref.edit()
+                    .putBoolean(KEY_IS_LOCKED, true)
+                    .putBoolean(KEY_CHALLENGE_ACTIVE, false)
+                    .apply()
+
+                ensureOverlayShowing()
+                return
             }
         } else {
-            // User left the selected app
-            if (sessionStartTime != 0L || overlayShown) {
-                Log.d(TAG, "User left target app. Resetting session/block state.")
+            if (sessionStartTime != 0L) {
+                Log.d(TAG, "User left target app before lock. Resetting session timer.")
             }
 
-            resetTrackingState()
+            resetSessionOnly()
             stopOverlayIfNeeded()
         }
+    }
+
+    private fun ensureOverlayShowing() {
+        if (!OverlayService.isRunning) {
+            val overlayIntent = Intent(this, OverlayService::class.java)
+            startService(overlayIntent)
+        }
+    }
+
+    private fun launchChallengeActivity() {
+        val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+            )
+        }
+        startActivity(challengeIntent)
     }
 
     private fun getCurrentForegroundApp(): String {
@@ -187,10 +252,19 @@ class AppMonitorService : Service() {
         return currentApp
     }
 
-    private fun resetTrackingState() {
+    private fun resetSessionOnly() {
+        sessionStartTime = 0L
+    }
+
+    private fun resetAllTrackingState() {
         sessionStartTime = 0L
         lastKnownApp = ""
-        overlayShown = false
+
+        val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        sharedPref.edit()
+            .putBoolean(KEY_IS_LOCKED, false)
+            .putBoolean(KEY_CHALLENGE_ACTIVE, false)
+            .apply()
     }
 
     private fun stopOverlayIfNeeded() {
@@ -199,7 +273,7 @@ class AppMonitorService : Service() {
 
     private fun stopMonitoring() {
         handler.removeCallbacks(monitorRunnable)
-        resetTrackingState()
+        resetAllTrackingState()
         stopOverlayIfNeeded()
     }
 
