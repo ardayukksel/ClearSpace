@@ -1,6 +1,5 @@
 package com.example.clearspace
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -19,9 +18,13 @@ class ChallengeActivity : AppCompatActivity() {
     private val relaunchHandler = Handler(Looper.getMainLooper())
     private var countDownTimer: CountDownTimer? = null
 
+    private lateinit var stateManager: ClearSpaceStateManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_challenge)
+
+        stateManager = ClearSpaceStateManager(this)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -29,11 +32,7 @@ class ChallengeActivity : AppCompatActivity() {
             }
         })
 
-        val sharedPref = getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
-        sharedPref.edit()
-            .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, true)
-            .apply()
-
+        stateManager.setChallengeActive(true)
         stopService(Intent(this, OverlayService::class.java))
 
         val tvTimer = findViewById<TextView>(R.id.tv_timer)
@@ -76,9 +75,8 @@ class ChallengeActivity : AppCompatActivity() {
     private fun enforceChallengeIfNeeded() {
         if (isUnlocking) return
 
-        val sharedPref = getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
-        val isLocked = sharedPref.getBoolean(AppMonitorService.KEY_IS_LOCKED, false)
-        val isChallengeActive = sharedPref.getBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
+        val isLocked = stateManager.isLocked()
+        val isChallengeActive = stateManager.isChallengeActive()
 
         if (isLocked && isChallengeActive) {
             relaunchHandler.removeCallbacksAndMessages(null)
@@ -96,16 +94,11 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun unlockAndReturnToTargetApp() {
-        val sharedPref = getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
-        val targetPackage = sharedPref.getString(AppMonitorService.KEY_TARGET_APP_PACKAGE, "") ?: ""
+        val targetPackage = stateManager.getTargetAppPackage()
 
         isUnlocking = true
 
-        val success = sharedPref.edit()
-            .putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
-            .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
-            .putBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
-            .commit()
+        val success = stateManager.clearAfterUnlock()
 
         if (!success) {
             Toast.makeText(this, "Failed to unlock app state.", Toast.LENGTH_SHORT).show()

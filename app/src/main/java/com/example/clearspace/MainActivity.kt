@@ -1,6 +1,5 @@
 package com.example.clearspace
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -24,14 +23,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var seekbarSession: SeekBar
     private lateinit var btnSave: Button
 
-    private lateinit var sharedPref: android.content.SharedPreferences
+    private lateinit var stateManager: ClearSpaceStateManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        sharedPref = getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
+        stateManager = ClearSpaceStateManager(this)
 
         tvSelectedApp = findViewById(R.id.tv_selected_app)
         btnSelectApp = findViewById(R.id.btn_select_app)
@@ -40,9 +39,9 @@ class MainActivity : AppCompatActivity() {
         seekbarSession = findViewById(R.id.seekbar_session)
         btnSave = findViewById(R.id.btn_save)
 
-        val savedSwitchState = sharedPref.getBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
-        val savedTimeLimit = sharedPref.getInt(AppMonitorService.KEY_TIME_LIMIT, 10).coerceAtLeast(1)
-        val savedAppName = sharedPref.getString(AppMonitorService.KEY_TARGET_APP_NAME, "None")
+        val savedSwitchState = stateManager.isMonitoringEnabled()
+        val savedTimeLimit = stateManager.getTimeLimitMinutes()
+        val savedAppName = stateManager.getTargetAppName()
 
         switchTarget.isChecked = savedSwitchState
         seekbarSession.progress = savedTimeLimit
@@ -79,9 +78,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        val savedAppName = sharedPref.getString(AppMonitorService.KEY_TARGET_APP_NAME, "None")
-        val savedTimeLimit = sharedPref.getInt(AppMonitorService.KEY_TIME_LIMIT, 10).coerceAtLeast(1)
-        val savedEnabled = sharedPref.getBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
+        val savedAppName = stateManager.getTargetAppName()
+        val savedTimeLimit = stateManager.getTimeLimitMinutes()
+        val savedEnabled = stateManager.isMonitoringEnabled()
 
         tvSelectedApp.text = "Target App: $savedAppName"
         tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
@@ -138,10 +137,7 @@ class MainActivity : AppCompatActivity() {
                 val selectedName = appEntries[which].first
                 val selectedPackage = appEntries[which].second
 
-                sharedPref.edit()
-                    .putString(AppMonitorService.KEY_TARGET_APP_NAME, selectedName)
-                    .putString(AppMonitorService.KEY_TARGET_APP_PACKAGE, selectedPackage)
-                    .apply()
+                stateManager.saveTargetApp(selectedName, selectedPackage)
 
                 tvSelectedApp.text = "Target App: $selectedName"
                 Toast.makeText(this, "Selected: $selectedName", Toast.LENGTH_SHORT).show()
@@ -152,9 +148,9 @@ class MainActivity : AppCompatActivity() {
     private fun saveAndApplyMonitoring() {
         val isTargetSelected = switchTarget.isChecked
         val selectedTime = seekbarSession.progress.coerceAtLeast(1)
-        val selectedAppPackage = sharedPref.getString(AppMonitorService.KEY_TARGET_APP_PACKAGE, "")
+        val selectedAppPackage = stateManager.getTargetAppPackage()
 
-        if (isTargetSelected && selectedAppPackage.isNullOrBlank()) {
+        if (isTargetSelected && selectedAppPackage.isBlank()) {
             Toast.makeText(this, "Please select a target app first.", Toast.LENGTH_SHORT).show()
             return
         }
@@ -200,13 +196,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMonitoringWithCurrentSettings(selectedTime: Int, isTargetSelected: Boolean) {
-        with(sharedPref.edit()) {
-            putBoolean(AppMonitorService.KEY_TARGET_ENABLED, isTargetSelected)
-            putInt(AppMonitorService.KEY_TIME_LIMIT, selectedTime)
-            putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
-            putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
-            apply()
-        }
+        stateManager.saveMonitoringSettings(isTargetSelected, selectedTime)
+        stateManager.resetLockState()
 
         stopService(Intent(this, OverlayService::class.java))
 
