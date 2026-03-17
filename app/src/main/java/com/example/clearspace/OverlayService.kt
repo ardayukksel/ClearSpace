@@ -29,16 +29,29 @@ class OverlayService : Service() {
         super.onCreate()
         isRunning = true
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        showOverlayIfNeeded()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (shouldSuppressOverlay()) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
         showOverlayIfNeeded()
         return START_STICKY
     }
 
+    private fun shouldSuppressOverlay(): Boolean {
+        val prefs = getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
+        val isChallengeActive = prefs.getBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
+        val transitionUntil = prefs.getLong(AppMonitorService.KEY_CHALLENGE_TRANSITION_UNTIL, 0L)
+        val inTransitionWindow = System.currentTimeMillis() < transitionUntil
+
+        return isChallengeActive || inTransitionWindow || isTransitioningToChallenge
+    }
+
     private fun showOverlayIfNeeded() {
-        if (overlayView != null || isOverlayAdded || isTransitioningToChallenge) return
+        if (overlayView != null || isOverlayAdded || shouldSuppressOverlay()) return
 
         overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_view, null)
 
@@ -74,17 +87,20 @@ class OverlayService : Service() {
 
             sharedPref.edit()
                 .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, true)
-                .apply()
+                .putLong(
+                    AppMonitorService.KEY_CHALLENGE_TRANSITION_UNTIL,
+                    System.currentTimeMillis() + 1500L
+                )
+                .commit()
 
-            // Hide and remove overlay immediately to avoid a visual flash
-            // when ChallengeActivity comes to the foreground.
             removeOverlayImmediately()
 
             val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
                 addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                            Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION
                 )
             }
             startActivity(challengeIntent)
@@ -105,24 +121,14 @@ class OverlayService : Service() {
                 isOverlayAdded = false
             }
         }
+
         overlayView = null
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-
-        overlayView?.let { view ->
-            if (isOverlayAdded) {
-                try {
-                    windowManager.removeViewImmediate(view)
-                } catch (_: Exception) {
-                }
-                isOverlayAdded = false
-            }
-        }
-
-        overlayView = null
+        removeOverlayImmediately()
         isTransitioningToChallenge = false
         isRunning = false
+        super.onDestroy()
     }
 }

@@ -38,10 +38,11 @@ class AppMonitorService : Service() {
         const val KEY_TARGET_APP_PACKAGE = "targetAppPackage"
         const val KEY_IS_LOCKED = "isLocked"
         const val KEY_CHALLENGE_ACTIVE = "isChallengeActive"
+        const val KEY_CHALLENGE_TRANSITION_UNTIL = "challengeTransitionUntil"
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private val checkInterval = 1000L
+    private val checkInterval = 300L
 
     private var sessionStartTime = 0L
     private var lastKnownApp = ""
@@ -132,6 +133,7 @@ class AppMonitorService : Service() {
         val targetAppPackage = stateManager.getTargetAppPackage()
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
+        val isChallengeTransitioning = isInChallengeTransitionWindow()
 
         if (!isEnabled || targetAppPackage.isBlank()) {
             Log.d(TAG, "Monitoring disabled or no target app selected.")
@@ -152,7 +154,7 @@ class AppMonitorService : Service() {
 
         Log.d(
             TAG,
-            "Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive"
+            "Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive, Transitioning=$isChallengeTransitioning"
         )
 
         if (effectiveForegroundApp.isBlank()) {
@@ -161,26 +163,29 @@ class AppMonitorService : Service() {
         }
 
         if (isLocked) {
-            // IMPORTANT:
-            // Once challenge has started, challenge flow must take priority over overlay.
-            // Otherwise the service may briefly still think the target app is foreground
-            // and recreate the overlay, causing the "double click" issue.
+            if (isChallengeTransitioning) {
+                Log.d(TAG, "Challenge transition window active. Suppressing overlay.")
+                stopOverlayIfNeeded()
+                resetSessionOnly()
+                return
+            }
+
             if (isChallengeActive) {
                 stopOverlayIfNeeded()
 
-                if (effectiveForegroundApp != ownPackage) {
+                if (effectiveForegroundApp != ownPackage && !ChallengeActivity.isVisible) {
                     Log.d(TAG, "Challenge is active and user is outside ClearSpace. Relaunching challenge.")
                     launchChallengeActivity()
-                } else {
-                    Log.d(TAG, "Challenge is active and ClearSpace is already foreground.")
                 }
 
                 resetSessionOnly()
                 return
             }
 
-            if (effectiveForegroundApp == targetAppPackage) {
-                Log.d(TAG, "Blocked target app detected while locked. Enforcing overlay.")
+            // While locked and before challenge starts, keep overlay enforced
+            // even if the user goes home or switches to another app.
+            if (effectiveForegroundApp != ownPackage) {
+                Log.d(TAG, "Locked state active outside ClearSpace. Enforcing overlay globally.")
                 ensureOverlayShowing()
                 return
             }
@@ -198,14 +203,12 @@ class AppMonitorService : Service() {
             val currentSessionTimeMs = System.currentTimeMillis() - sessionStartTime
             val limitMs = timeLimitMinutes * 60 * 1000L
 
-            Log.d(
-                TAG,
-                "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s"
-            )
+            Log.d(TAG, "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s")
 
             if (currentSessionTimeMs >= limitMs) {
                 Log.d(TAG, "Session limit reached. Locking app and launching overlay.")
                 stateManager.setLockAndChallenge(locked = true, challengeActive = false)
+                clearChallengeTransitionWindow()
                 ensureOverlayShowing()
                 return
             }
@@ -220,6 +223,16 @@ class AppMonitorService : Service() {
     }
 
     private fun ensureOverlayShowing() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val isChallengeActive = prefs.getBoolean(KEY_CHALLENGE_ACTIVE, false)
+        val transitionUntil = prefs.getLong(KEY_CHALLENGE_TRANSITION_UNTIL, 0L)
+        val inTransitionWindow = System.currentTimeMillis() < transitionUntil
+
+        if (isChallengeActive || inTransitionWindow) {
+            Log.d(TAG, "Not showing overlay because challenge flow is already active/transitioning.")
+            return
+        }
+
         if (!OverlayService.isRunning) {
             val overlayIntent = Intent(this, OverlayService::class.java)
             startService(overlayIntent)
@@ -231,7 +244,8 @@ class AppMonitorService : Service() {
             addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION
             )
         }
         startActivity(challengeIntent)
@@ -259,6 +273,17 @@ class AppMonitorService : Service() {
         }
 
         return currentApp
+    }
+
+    private fun isInChallengeTransitionWindow(): Boolean {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val until = prefs.getLong(KEY_CHALLENGE_TRANSITION_UNTIL, 0L)
+        return System.currentTimeMillis() < until
+    }
+
+    private fun clearChallengeTransitionWindow() {
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putLong(KEY_CHALLENGE_TRANSITION_UNTIL, 0L).apply()
     }
 
     private fun scheduleServiceRestart() {
@@ -319,6 +344,7 @@ class AppMonitorService : Service() {
     private fun resetAllTrackingState() {
         sessionStartTime = 0L
         lastKnownApp = ""
+        clearChallengeTransitionWindow()
         stateManager.resetLockState()
     }
 
