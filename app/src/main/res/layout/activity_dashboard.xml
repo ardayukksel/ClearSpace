@@ -5,24 +5,24 @@
     android:orientation="vertical"
     android:padding="32dp"
     android:gravity="center"
-    android:background="#FFFFFF">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="My Dashboard"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:textColor="#111111"
-        android:layout_marginBottom="40dp" />
+    android:background="#F5F4F0"> <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="MY DASHBOARD"
+    android:textSize="28sp"
+    android:textStyle="bold"
+    android:letterSpacing="0.1"
+    android:textColor="#4A3B32"
+    android:layout_marginBottom="40dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#F3E5F5"
-        android:padding="24dp"
+        android:background="#FFFFFF"
+        android:padding="32dp"
         android:gravity="center"
+        android:elevation="2dp"
         android:layout_marginBottom="32dp">
 
         <TextView
@@ -30,15 +30,15 @@
             android:layout_height="wrap_content"
             android:text="Time Saved Today"
             android:textSize="18sp"
-            android:textColor="#666666" />
+            android:textColor="#8C8C8C" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="45 mins"
-            android:textSize="40sp"
+            android:textSize="44sp"
             android:textStyle="bold"
-            android:textColor="#6200EE"
+            android:textColor="#4A3B32"
             android:layout_marginTop="8dp" />
     </LinearLayout>
 
@@ -46,20 +46,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Focus on what truly matters."
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:textStyle="italic"
-        android:textColor="#555555"
+        android:textColor="#8C8C8C"
         android:gravity="center"
         android:layout_marginBottom="40dp" />
 
     <Button
         android:id="@+id/btn_back"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Back to Settings"
+        android:layout_height="60dp"
+        android:text="BACK TO SETTINGS"
         android:textSize="16sp"
-        android:padding="12dp"
-        android:backgroundTint="#6200EE"
+        android:letterSpacing="0.1"
+        android:backgroundTint="#4A3B32"
         android:textColor="#FFFFFF" />
 
 </LinearLayout>

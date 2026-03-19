@@ -2,4 +2,5 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-</resources>
+
+    <color name="bg_beige">#F4F3ED</color>       <color name="btn_dark_brown">#43352C</color> <color name="text_gray">#94918B</color>      <color name="list_bg_gray">#EBE9E2</color>   <color name="checkbox_border">#5C524B</color> </resources>

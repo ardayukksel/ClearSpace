@@ -3,23 +3,27 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center">
-
-    <TextView
-        android:id="@+id/tv_selected_app"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Target App: None"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+    android:padding="32dp"
+    android:gravity="center"
+    android:background="#F5F4F0"> <TextView
+    android:id="@+id/tv_selected_app"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Target App: None"
+    android:textSize="20sp"
+    android:textStyle="bold"
+    android:textColor="#4A3B32"
+    android:layout_marginBottom="16dp"/>
 
     <Button
         android:id="@+id/btn_select_app"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Choose App to Block"
+        android:layout_height="60dp"
+        android:text="CHOOSE APP TO BLOCK"
+        android:textSize="16sp"
+        android:letterSpacing="0.1"
+        android:backgroundTint="#A0A0A0"
+        android:textColor="#FFFFFF"
         android:layout_marginBottom="32dp"/>
 
     <Switch
@@ -27,6 +31,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:text="Enable Blocking"
+        android:textColor="#4A3B32"
         android:textSize="18sp"
         android:layout_marginBottom="32dp"/>
 
@@ -35,6 +40,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Session Limit: 10 min"
+        android:textColor="#8C8C8C"
         android:textSize="16sp"
         android:layout_marginBottom="8dp"/>
 
@@ -44,13 +50,18 @@
         android:layout_height="wrap_content"
         android:max="60"
         android:progress="10"
-        android:layout_marginBottom="32dp"/>
+        android:progressTint="#4A3B32"
+        android:thumbTint="#4A3B32"
+        android:layout_marginBottom="48dp"/>
 
     <Button
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="Save Settings"
-        android:textSize="18sp"/>
+        android:text="SAVE SETTINGS"
+        android:textSize="16sp"
+        android:letterSpacing="0.1"
+        android:backgroundTint="#4A3B32"
+        android:textColor="#FFFFFF"/>
 
 </LinearLayout>
