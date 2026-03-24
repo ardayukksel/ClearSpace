@@ -1,7 +1,8 @@
 DROP DATABASE IF EXISTS self_regulation_app;
-CREATE DATABASE IF NOT EXISTS self_regulation_app
-  DEFAULT CHARACTER SET utf8mb4
-  DEFAULT COLLATE utf8mb4_unicode_ci;
+
+CREATE DATABASE self_regulation_app
+	DEFAULT CHARACTER SET utf8mb4
+    DEFAULT COLLATE utf8mb4_unicode_ci;
 
 USE self_regulation_app;
 
@@ -10,12 +11,14 @@ CREATE TABLE users (
   name                 VARCHAR(120) NOT NULL,
   email                VARCHAR(190) NOT NULL,
   password_hash        VARCHAR(255) NULL,
+  session_limit_minutes INT UNSIGNED NOT NULL DEFAULT 15,
   daily_limit_minutes  INT UNSIGNED NOT NULL DEFAULT 60,
   locked_until         DATETIME NULL,
   created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (user_id),
-  UNIQUE KEY uq_users_email (email)
+  UNIQUE KEY uq_users_email (email),
+  CONSTRAINT chk_users_limits CHECK (session_limit_minutes > 0 AND daily_limit_minutes > 0)
 ) ENGINE=InnoDB;
 
 CREATE TABLE sessions (
@@ -44,7 +47,8 @@ CREATE TABLE challenges (
   type             ENUM('reflection','breathing','maths','typing') NOT NULL,
   active           BOOLEAN NOT NULL DEFAULT TRUE,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (challenge_id)
+  PRIMARY KEY (challenge_id),
+  KEY idx_challenges_active (active)
 ) ENGINE=InnoDB;
 
 CREATE TABLE user_challenges (
