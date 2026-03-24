@@ -46,7 +46,7 @@ class ChallengeActivityTest {
     }
 
     @Test
-    fun backend_TC_104() {
+    fun frontend_TC_104() {
         //User cannot bypass interruption without completing challenge
         Log.i("ChallengeActivityTest", "Starting backend_TC_104")
 
