@@ -15,6 +15,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.lifecycle.Lifecycle // added import
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -47,61 +48,79 @@ class ChallengeActivityTest {
 
     @Test
     fun frontend_TC_104() {
-        //User cannot bypass interruption without completing challenge
-        Log.i("ChallengeActivityTest", "Starting backend_TC_104")
+        Log.i("ChallengeActivityTest", "Starting frontend_TC_104: Challenge completion blocker")
+        
+        // ==========================================
+        // Objective: Ensure the frontend blocks progression until challenge is completed.
+        // Test Steps:
+        // 1. Trigger interruption (launch ChallengeActivity).
+        // 2. Try pressing back/home/continue without answering.
+        // ==========================================
 
+        // Expected Result:
+        // - User cannot proceed without valid challenge completion.
+        // - Appropriate validation message appears if needed.
+
+        Log.i("ChallengeActivityTest", "Step 1: Launching ChallengeActivity (Interruption triggered)")
         val scenario = ActivityScenario.launch(ChallengeActivity::class.java)
 
-        // Challenge screen is shown
-        Log.i("ChallengeActivityTest", "Checking if Challenge screen is shown")
+        // Verify Challenge screen is shown
+        Log.i("ChallengeActivityTest", "Verifying Challenge screen UI elements")
         onView(withText("Pause & Reflect")).check(matches(isDisplayed()))
 
-        // Unlock button should not be available immediately
-        Log.i("ChallengeActivityTest", "Checking if Unlock button is hidden initially")
+        // Verify unlock button is hidden
+        Log.i("ChallengeActivityTest", "Verifying Unlock button is hidden initially")
         onView(withId(R.id.btn_unlock))
             .check(matches(withEffectiveVisibility(Visibility.GONE)))
 
-        // Back press should NOT dismiss the challenge
-        Log.i("ChallengeActivityTest", "Pressing back button")
+        // Step 2: Try pressing back
+        Log.i("ChallengeActivityTest", "Step 2: Pressing back button to attempt bypass")
         pressBack()
-        Log.i("ChallengeActivityTest", "Checking if Challenge screen is still shown after back press")
+        
+        Log.i("ChallengeActivityTest", "Verifying Challenge screen is still shown after back press")
         onView(withText("Pause & Reflect")).check(matches(isDisplayed()))
 
-        // Still not unlockable before timer finishes
-        Log.i("ChallengeActivityTest", "Checking if Unlock button is still hidden after back press")
+        // Verify unlock is still hidden
+        Log.i("ChallengeActivityTest", "Verifying Unlock button is still hidden after back press bypass attempt")
         onView(withId(R.id.btn_unlock))
             .check(matches(withEffectiveVisibility(Visibility.GONE)))
 
-        // Wait for the 5-second challenge timer to finish
-        Log.i("ChallengeActivityTest", "Waiting for 5.5 seconds for timer to finish")
+        // Wait for timer
+        Log.i("ChallengeActivityTest", "Waiting for the 5-second challenge timer to finish...")
         SystemClock.sleep(5500)
 
-        // Now unlock becomes available
-        Log.i("ChallengeActivityTest", "Checking if Unlock button is now visible")
+        // Verify unlock becomes available
+        Log.i("ChallengeActivityTest", "Verifying Unlock button is now visible")
         onView(withId(R.id.btn_unlock))
             .check(matches(isDisplayed()))
 
-        // User completes the challenge by pressing unlock
-        Log.i("ChallengeActivityTest", "Clicking Unlock button")
+        // Step 3: User answers/completes challenge
+        Log.i("ChallengeActivityTest", "Step 3: Completing the challenge by clicking Unlock")
         onView(withId(R.id.btn_unlock)).perform(click())
 
-        // Give the finish/relaunch logic a moment to run
-        Log.i("ChallengeActivityTest", "Waiting for finish/relaunch logic")
+        // Give the activity time to finish
+        Log.i("ChallengeActivityTest", "Waiting for finish/relaunch routing logic")
         SystemClock.sleep(300)
 
-        // App state should be cleared after successful unlock
-        Log.i("ChallengeActivityTest", "Verifying shared preferences state")
+        // Verify state is cleared
+        Log.i("ChallengeActivityTest", "Verifying AppMonitor shared preferences state is cleared upon success")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val prefs = context.getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
         assertEquals(false, prefs.getBoolean(AppMonitorService.KEY_IS_LOCKED, false))
         assertEquals(false, prefs.getBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false))
 
-        // Activity should now be closing
-        Log.i("ChallengeActivityTest", "Verifying activity is finishing")
-        scenario.onActivity { activity ->
-            assertEquals(true, activity.isFinishing)
+        // Verify activity destruction
+        Log.i("ChallengeActivityTest", "Polling activity destruction lifecycle state (up to 2 seconds)")
+        var isDestroyed = false
+        for (i in 1..20) {
+            if (scenario.state == Lifecycle.State.DESTROYED) {
+                isDestroyed = true
+                break
+            }
+            SystemClock.sleep(100)
         }
+        assertEquals("Activity should be destroyed after successful unlock", true, isDestroyed)
         
-        Log.i("ChallengeActivityTest", "backend_TC_104 completed successfully")
+        Log.i("ChallengeActivityTest", "frontend_TC_104 completed successfully")
     }
 }
