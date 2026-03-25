@@ -4,8 +4,8 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:background="#121212"
-    android:padding="24dp">
+    android:background="#4A3B32"
+    android:padding="32dp">
 
     <TextView
         android:layout_width="wrap_content"
@@ -13,33 +13,39 @@
         android:text="Pause &amp; Reflect"
         android:textSize="32sp"
         android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:letterSpacing="0.05"
+        android:textColor="#F5F4F0"
         android:layout_marginBottom="16dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Take a deep breath..."
-        android:textSize="18sp"
-        android:textColor="#B0B0B0"
-        android:layout_marginBottom="48dp"/>
+        android:textSize="20sp"
+        android:textStyle="italic"
+        android:textColor="#D9D3C9"
+        android:layout_marginBottom="64dp"/>
 
     <TextView
         android:id="@+id/tv_timer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="5"
-        android:textSize="80sp"
+        android:textSize="100sp"
         android:textStyle="bold"
-        android:textColor="#4CAF50"
-        android:layout_marginBottom="64dp"/>
+        android:textColor="#F5F4F0"
+        android:layout_marginBottom="80dp"/>
 
     <Button
         android:id="@+id/btn_unlock"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:text="Unlock App"
-        android:textSize="18sp"
+        android:text="UNLOCK APP"
+        android:textSize="16sp"
+        android:letterSpacing="0.1"
+        android:textStyle="bold"
+        android:backgroundTint="#F5F4F0"
+        android:textColor="#4A3B32"
         android:visibility="invisible" />
 
 </LinearLayout>
