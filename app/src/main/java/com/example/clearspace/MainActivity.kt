@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.Switch
@@ -12,7 +13,10 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.clearspace.data.network.RetrofitClient
 import com.example.clearspace.utils.PermissionUtils
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
@@ -72,6 +76,19 @@ class MainActivity : AppCompatActivity() {
 
         btnSave.setOnClickListener {
             saveAndApplyMonitoring()
+        }
+
+        // Retrofit API test
+        Log.d("API_TEST", "App started")
+
+        lifecycleScope.launch {
+            Log.d("API_TEST", "Calling API...")
+            try {
+                val challenges = RetrofitClient.api.getActiveChallenges()
+                Log.d("API_TEST", "SUCCESS: $challenges")
+            } catch (e: Exception) {
+                Log.e("API_TEST", "ERROR: ${e.message}", e)
+            }
         }
     }
 
