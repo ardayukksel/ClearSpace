@@ -2,36 +2,52 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#E61A110A" android:gravity="center"
     android:orientation="vertical"
-    android:gravity="center"
-    android:background="#E64A3B32"> <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Pause &amp; Reflect"
-    android:textColor="#F5F4F0"
-    android:textSize="36sp"
-    android:textStyle="bold"
-    android:letterSpacing="0.05"
-    android:layout_marginBottom="16dp"/>
+    android:padding="32dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Time limit reached for this session."
-        android:textColor="#D9D3C9"
-        android:textSize="18sp"
-        android:layout_marginBottom="48dp"/>
+        android:text="Pause &amp; Reflect"
+        android:textColor="@color/surface"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
 
-    <Button
-        android:id="@+id/btn_continue_challenge"
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="#F5F4F0"
-        android:padding="16dp"
-        android:text="CONTINUE TO CHALLENGE"
-        android:letterSpacing="0.1"
-        android:textColor="#4A3B32"
-        android:textStyle="bold"
-        android:textSize="14sp" />
+        android:text="Complete the breathing exercise to unlock."
+        android:textColor="@color/b300"
+        android:textSize="16sp"
+        android:textAlignment="center"
+        android:layout_marginBottom="48dp" />
+
+    <FrameLayout
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:layout_marginBottom="48dp">
+        <TextView
+            android:id="@+id/tv_breath_phase"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Breathe In"
+            android:textColor="@color/surface"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/btn_unlock"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:backgroundTint="@color/sage"
+        android:text="Unlock App"
+        android:textColor="@color/surface"
+        android:textSize="16sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

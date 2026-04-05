@@ -2,64 +2,69 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/appBg"
     android:orientation="vertical"
-    android:padding="32dp"
-    android:gravity="center"
-    android:background="#F5F4F0"> <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="MY DASHBOARD"
-    android:textSize="28sp"
-    android:textStyle="bold"
-    android:letterSpacing="0.1"
-    android:textColor="#4A3B32"
-    android:layout_marginBottom="40dp" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="#FFFFFF"
-        android:padding="32dp"
-        android:gravity="center"
-        android:elevation="2dp"
-        android:layout_marginBottom="32dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Time Saved Today"
-            android:textSize="18sp"
-            android:textColor="#8C8C8C" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="45 mins"
-            android:textSize="44sp"
-            android:textStyle="bold"
-            android:textColor="#4A3B32"
-            android:layout_marginTop="8dp" />
-    </LinearLayout>
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Focus on what truly matters."
-        android:textSize="18sp"
-        android:textStyle="italic"
-        android:textColor="#8C8C8C"
-        android:gravity="center"
-        android:layout_marginBottom="40dp" />
+        android:text="Dashboard"
+        android:textColor="@color/b800"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_edit_text"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/tv_user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hello, User"
+            android:textColor="@color/b800"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_user_goal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="My goal: Be more present."
+            android:textColor="@color/b600"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <Button
-        android:id="@+id/btn_back"
+        android:id="@+id/btn_review_onboarding"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="BACK TO SETTINGS"
-        android:textSize="16sp"
-        android:letterSpacing="0.1"
-        android:backgroundTint="#4A3B32"
-        android:textColor="#FFFFFF" />
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/surface"
+        android:textColor="@color/b800"
+        android:text="Review Onboarding"
+        android:textAllCaps="false"
+        android:textStyle="bold" />
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btn_back_home"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:text="Back to Home"
+        android:textAllCaps="false"
+        android:textColor="@color/surface"
+        android:textStyle="bold" />
 </LinearLayout>

@@ -2,69 +2,102 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/appBg"
     android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp"
-    android:background="#F5F4F0"> <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="HOW OLD ARE YOU?"
-    android:textSize="22sp"
-    android:textColor="#8C8C8C"
-    android:letterSpacing="0.1"
-    android:layout_marginBottom="48dp"/>
+    android:padding="24dp">
 
-    <RadioGroup
-        android:id="@+id/rg_age"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="64dp">
+    <ViewFlipper
+        android:id="@+id/view_flipper_onboarding"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <RadioButton
-            android:id="@+id/rb_age_1"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="13-19"
-            android:textSize="20sp"
-            android:textColor="#A0A0A0"
-            android:padding="8dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
 
-        <RadioButton
-            android:id="@+id/rb_age_2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="20-25"
-            android:textSize="20sp"
-            android:textColor="#A0A0A0"
-            android:padding="8dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="How old are you?"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/b800"
+                android:layout_marginBottom="32dp"/>
 
-        <RadioButton
-            android:id="@+id/rb_age_3"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="26-30"
-            android:textSize="20sp"
-            android:textColor="#A0A0A0"
-            android:padding="8dp"/>
+            <RadioGroup
+                android:id="@+id/rg_age"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <RadioButton android:id="@+id/rb_age_1" android:text="13 - 19" android:textSize="18sp" android:padding="12dp" />
+                <RadioButton android:id="@+id/rb_age_2" android:text="20 - 25" android:textSize="18sp" android:padding="12dp" />
+                <RadioButton android:id="@+id/rb_age_3" android:text="26 - 30" android:textSize="18sp" android:padding="12dp" />
+                <RadioButton android:id="@+id/rb_age_4" android:text="30+" android:textSize="18sp" android:padding="12dp" />
+            </RadioGroup>
+        </LinearLayout>
 
-        <RadioButton
-            android:id="@+id/rb_age_4"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="30+"
-            android:textSize="20sp"
-            android:textColor="#A0A0A0"
-            android:padding="8dp"/>
-    </RadioGroup>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set Your Goal"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/b800"
+                android:layout_marginBottom="16dp"/>
+
+            <EditText
+                android:id="@+id/et_goal"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@drawable/bg_edit_text"
+                android:gravity="top|start"
+                android:hint="I will spend less time scrolling..."
+                android:padding="16dp"
+                android:textColor="@color/textPrimary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You're all set!"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/b800"
+                android:layout_marginBottom="16dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ClearSpace will now monitor your app usage and help you stay focused in the background."
+                android:textSize="16sp"
+                android:textAlignment="center"
+                android:textColor="@color/mutedDark" />
+        </LinearLayout>
+
+    </ViewFlipper>
 
     <Button
         android:id="@+id/btn_next"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="NEXT"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#4A3B32"
-        android:textSize="16sp"
-        android:letterSpacing="0.1"/>
+        android:layout_height="56dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:text="Next"
+        android:textAllCaps="false"
+        android:textColor="@color/surface"
+        android:textStyle="bold" />
 
 </LinearLayout>

@@ -1,251 +1,129 @@
 package com.example.clearspace
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
+import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.example.clearspace.data.network.RetrofitClient
-import com.example.clearspace.utils.PermissionUtils
-import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var tvSelectedApp: TextView
-    private lateinit var btnSelectApp: Button
     private lateinit var switchTarget: Switch
     private lateinit var tvSessionLimit: TextView
     private lateinit var seekbarSession: SeekBar
     private lateinit var btnSave: Button
 
+    // UI Elements for mock app selection (based on Figma design)
+    private lateinit var btnAppInstagram: LinearLayout
+    private lateinit var btnAppTiktok: LinearLayout
+
     private lateinit var stateManager: ClearSpaceStateManager
+
+    // Track selected state for mock apps
+    private var isInstagramSelected = false
+    private var isTiktokSelected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
+        // Initialize state manager to read/write SharedPreferences
         stateManager = ClearSpaceStateManager(this)
 
-        tvSelectedApp = findViewById(R.id.tv_selected_app)
-        btnSelectApp = findViewById(R.id.btn_select_app)
+        // Bind UI components
         switchTarget = findViewById(R.id.switch_target_app)
         tvSessionLimit = findViewById(R.id.tv_session_limit)
         seekbarSession = findViewById(R.id.seekbar_session)
         btnSave = findViewById(R.id.btn_save)
+        btnAppInstagram = findViewById(R.id.btn_app_instagram)
+        btnAppTiktok = findViewById(R.id.btn_app_tiktok)
 
-        val savedSwitchState = stateManager.isMonitoringEnabled()
-        val savedTimeLimit = stateManager.getTimeLimitMinutes()
-        val savedAppName = stateManager.getTargetAppName()
+        // Restore previous settings from state manager
+        val isEnabled = stateManager.isMonitoringEnabled()
+        val timeLimit = stateManager.getTimeLimitMinutes()
 
-        switchTarget.isChecked = savedSwitchState
-        seekbarSession.progress = savedTimeLimit
-        tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
-        tvSelectedApp.text = "Target App: $savedAppName"
+        switchTarget.isChecked = isEnabled
+        seekbarSession.progress = timeLimit
+        tvSessionLimit.text = "Session Limit: $timeLimit min"
+        updateSliderState(isEnabled)
 
-        updateSliderState(savedSwitchState)
-        checkCorePermissionsOnLaunch()
-        maybeRemindAccessibilityOnLaunch()
-
-        btnSelectApp.setOnClickListener {
-            showAppPicker()
+        // App selection mock logic: Toggle Instagram selection
+        btnAppInstagram.setOnClickListener {
+            isInstagramSelected = !isInstagramSelected
+            btnAppInstagram.alpha = if (isInstagramSelected) 1.0f else 0.4f
         }
 
+        // App selection mock logic: Toggle TikTok selection
+        btnAppTiktok.setOnClickListener {
+            isTiktokSelected = !isTiktokSelected
+            btnAppTiktok.alpha = if (isTiktokSelected) 1.0f else 0.4f
+        }
+
+        // Toggle switch listener to enable/disable UI elements
         switchTarget.setOnCheckedChangeListener { _, isChecked ->
             updateSliderState(isChecked)
         }
 
+        // SeekBar listener to dynamically update the time limit text
         seekbarSession.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val safeProgress = progress.coerceAtLeast(1)
-                tvSessionLimit.text = "Session Limit: $safeProgress min"
+                val displayTime = progress.coerceAtLeast(1) // Enforce minimum 1 minute
+                tvSessionLimit.text = "Session Limit: $displayTime min"
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         })
 
+        // Save settings and restart monitoring service when button is clicked
         btnSave.setOnClickListener {
-            saveAndApplyMonitoring()
-        }
+            val selectedTime = seekbarSession.progress.coerceAtLeast(1)
+            val isTargetSelected = switchTarget.isChecked
 
-        // Retrofit API test
-        Log.d("API_TEST", "App started")
-
-        lifecycleScope.launch {
-            Log.d("API_TEST", "Calling API...")
-            try {
-                val challenges = RetrofitClient.api.getActiveChallenges()
-                Log.d("API_TEST", "SUCCESS: $challenges")
-            } catch (e: Exception) {
-                Log.e("API_TEST", "ERROR: ${e.message}", e)
-            }
+            startMonitoringWithCurrentSettings(selectedTime, isTargetSelected)
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        val savedAppName = stateManager.getTargetAppName()
-        val savedTimeLimit = stateManager.getTimeLimitMinutes()
-        val savedEnabled = stateManager.isMonitoringEnabled()
-
-        tvSelectedApp.text = "Target App: $savedAppName"
-        tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
-        seekbarSession.progress = savedTimeLimit
-        switchTarget.isChecked = savedEnabled
-        updateSliderState(savedEnabled)
+    // Updates the visual and interactive state of the slider based on the toggle
+    private fun updateSliderState(isEnabled: Boolean) {
+        seekbarSession.isEnabled = isEnabled
+        tvSessionLimit.alpha = if (isEnabled) 1.0f else 0.4f
     }
 
-    private fun checkCorePermissionsOnLaunch() {
-        if (!PermissionUtils.hasUsageStatsPermission(this)) {
-            PermissionUtils.requestUsageStatsPermission(this)
-        } else if (!PermissionUtils.hasOverlayPermission(this)) {
-            PermissionUtils.requestOverlayPermission(this)
-        }
-    }
-
-    private fun maybeRemindAccessibilityOnLaunch() {
-        if (!PermissionUtils.hasAccessibilityPermission(this)) {
-            Toast.makeText(
-                this,
-                "Accessibility permission is recommended for stronger blocking.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    private fun showAppPicker() {
-        val pm = packageManager
-        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
-
-        val resolveInfos = pm.queryIntentActivities(mainIntent, PackageManager.MATCH_ALL)
-
-        val appEntries = resolveInfos
-            .mapNotNull { info ->
-                val appName = info.loadLabel(pm)?.toString() ?: return@mapNotNull null
-                val packageName = info.activityInfo.packageName
-
-                if (packageName == packageNameFromSelf()) {
-                    return@mapNotNull null
-                }
-
-                appName to packageName
-            }
-            .distinctBy { it.second }
-            .sortedBy { it.first.lowercase() }
-
-        val appNames = appEntries.map { it.first }.toTypedArray()
-
-        AlertDialog.Builder(this)
-            .setTitle("Select App to Block")
-            .setItems(appNames) { _, which ->
-                val selectedName = appEntries[which].first
-                val selectedPackage = appEntries[which].second
-
-                stateManager.saveTargetApp(selectedName, selectedPackage)
-
-                tvSelectedApp.text = "Target App: $selectedName"
-                Toast.makeText(this, "Selected: $selectedName", Toast.LENGTH_SHORT).show()
-            }
-            .show()
-    }
-
-    private fun saveAndApplyMonitoring() {
-        val isTargetSelected = switchTarget.isChecked
-        val selectedTime = seekbarSession.progress.coerceAtLeast(1)
-        val selectedAppPackage = stateManager.getTargetAppPackage()
-
-        if (isTargetSelected && selectedAppPackage.isBlank()) {
-            Toast.makeText(this, "Please select a target app first.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (isTargetSelected && !PermissionUtils.hasUsageStatsPermission(this)) {
-            Toast.makeText(this, "Please grant Usage Access permission first.", Toast.LENGTH_SHORT).show()
-            PermissionUtils.requestUsageStatsPermission(this)
-            return
-        }
-
-        if (isTargetSelected && !PermissionUtils.hasOverlayPermission(this)) {
-            Toast.makeText(this, "Please grant Overlay permission first.", Toast.LENGTH_SHORT).show()
-            PermissionUtils.requestOverlayPermission(this)
-            return
-        }
-
-        if (isTargetSelected && !PermissionUtils.hasAccessibilityPermission(this)) {
-            showAccessibilityRecommendationDialog(
-                onContinueAnyway = {
-                    startMonitoringWithCurrentSettings(selectedTime, isTargetSelected)
-                }
-            )
-            return
-        }
-
-        startMonitoringWithCurrentSettings(selectedTime, isTargetSelected)
-    }
-
-    private fun showAccessibilityRecommendationDialog(onContinueAnyway: () -> Unit) {
-        AlertDialog.Builder(this)
-            .setTitle("Recommended Permission")
-            .setMessage(
-                "Accessibility permission is recommended for faster and stronger blocking. " +
-                        "You can continue without it, but enforcement may be less responsive."
-            )
-            .setPositiveButton("Open Settings") { _, _ ->
-                PermissionUtils.requestAccessibilityPermission(this)
-            }
-            .setNegativeButton("Continue Anyway") { _, _ ->
-                onContinueAnyway()
-            }
-            .show()
-    }
-
+    // Starts or stops the AppMonitorService based on saved user preferences
     private fun startMonitoringWithCurrentSettings(selectedTime: Int, isTargetSelected: Boolean) {
+        // Save settings securely
         stateManager.saveMonitoringSettings(isTargetSelected, selectedTime)
         stateManager.resetLockState()
 
+        // Stop any currently running overlay to prevent glitches
         stopService(Intent(this, OverlayService::class.java))
 
         val monitorIntent = Intent(this, AppMonitorService::class.java)
 
         if (isTargetSelected) {
+            // Determine target package based on user's selection (Mocking real app packages)
+            val targetPackage = if (isInstagramSelected) "com.instagram.android" else "com.zhiliaoapp.musically"
+            stateManager.saveTargetApp("Selected App", targetPackage)
+
             monitorIntent.action = AppMonitorService.ACTION_START_MONITORING
+            Toast.makeText(this, "Monitoring started. Limit: $selectedTime min", Toast.LENGTH_SHORT).show()
 
-            Toast.makeText(
-                this,
-                "Monitoring started. Limit: $selectedTime min",
-                Toast.LENGTH_SHORT
-            ).show()
-
+            // Handle Foreground Service start for Android O and above
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(monitorIntent)
             } else {
                 startService(monitorIntent)
             }
         } else {
+            // Stop monitoring completely if switch is turned off
             monitorIntent.action = AppMonitorService.ACTION_STOP_MONITORING
             startService(monitorIntent)
-
             Toast.makeText(this, "Monitoring is OFF", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun updateSliderState(isEnabled: Boolean) {
-        seekbarSession.isEnabled = isEnabled
-        tvSessionLimit.alpha = if (isEnabled) 1.0f else 0.4f
-    }
-
-    private fun packageNameFromSelf(): String = packageName
 }

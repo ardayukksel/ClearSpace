@@ -3,4 +3,28 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    <color name="bg_beige">#F4F3ED</color>       <color name="btn_dark_brown">#43352C</color> <color name="text_gray">#94918B</color>      <color name="list_bg_gray">#EBE9E2</color>   <color name="checkbox_border">#5C524B</color> </resources>
+    <color name="appBg">#F5EFE8</color>
+    <color name="surface">#FDFAF6</color>
+
+    <color name="b900">#1A110A</color>
+    <color name="b800">#2D1F14</color>
+    <color name="b700">#5C3D2E</color>
+    <color name="b600">#7A5240</color>
+    <color name="b500">#9B6E52</color>
+    <color name="b400">#B88A6A</color>
+    <color name="b300">#C9A882</color>
+    <color name="b200">#DEC4A0</color>
+    <color name="b100">#EDD8BA</color>
+    <color name="b50">#F5EFE8</color>
+
+    <color name="border">#DDD5C8</color>
+    <color name="muted2">#E8DDD0</color>
+    <color name="muted">#AFA49A</color>
+    <color name="mutedDark">#7A6A5E</color>
+    <color name="textPrimary">#2D1F14</color>
+    <color name="textSecondary">#5C4A3A</color>
+
+    <color name="sage">#7A9E82</color>
+    <color name="sageSoft">#EAF2EB</color>
+    <color name="sageDark">#5A7E62</color>
+</resources>

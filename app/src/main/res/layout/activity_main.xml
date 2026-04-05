@@ -2,66 +2,143 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/appBg"
     android:orientation="vertical"
-    android:padding="32dp"
-    android:gravity="center"
-    android:background="#F5F4F0"> <TextView
-    android:id="@+id/tv_selected_app"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Target App: None"
-    android:textSize="20sp"
-    android:textStyle="bold"
-    android:textColor="#4A3B32"
-    android:layout_marginBottom="16dp"/>
+    android:padding="24dp">
 
-    <Button
-        android:id="@+id/btn_select_app"
-        android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="CHOOSE APP TO BLOCK"
-        android:textSize="16sp"
-        android:letterSpacing="0.1"
-        android:backgroundTint="#A0A0A0"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="32dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ClearSpace"
+        android:textColor="@color/b800"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
 
-    <Switch
-        android:id="@+id/switch_target_app"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="Enable Blocking"
-        android:textColor="#4A3B32"
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="What do you want to block?"
+        android:textColor="@color/b800"
         android:textSize="18sp"
-        android:layout_marginBottom="32dp"/>
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="1"
+        android:layout_marginBottom="32dp">
+
+        <LinearLayout
+            android:id="@+id/btn_app_instagram"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/bg_edit_text"
+            android:padding="16dp"
+            android:layout_marginEnd="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📸"
+                android:textSize="32sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Instagram"
+                android:textSize="14sp"
+                android:textColor="@color/b700"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_app_tiktok"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/bg_edit_text"
+            android:padding="16dp"
+            android:layout_marginStart="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎵"
+                android:textSize="32sp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TikTok"
+                android:textSize="14sp"
+                android:textColor="@color/b700"
+                android:textStyle="bold"
+                android:layout_marginTop="8dp"/>
+        </LinearLayout>
+    </GridLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_edit_text"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="24dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Enable Blocking"
+            android:textColor="@color/b800"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <Switch
+            android:id="@+id/switch_target_app"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tv_session_limit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Session Limit: 10 min"
-        android:textColor="#8C8C8C"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
+        android:textColor="@color/mutedDark"
+        android:textSize="14sp"
+        android:layout_marginBottom="8dp" />
 
     <SeekBar
         android:id="@+id/seekbar_session"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:max="60"
+        android:max="300"
         android:progress="10"
-        android:progressTint="#4A3B32"
-        android:thumbTint="#4A3B32"
-        android:layout_marginBottom="48dp"/>
+        android:progressTint="@color/b700"
+        android:thumbTint="@color/b800"
+        android:layout_marginBottom="32dp" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <Button
         android:id="@+id/btn_save"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="SAVE SETTINGS"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:text="Save Settings"
+        android:textAllCaps="false"
+        android:textColor="@color/surface"
         android:textSize="16sp"
-        android:letterSpacing="0.1"
-        android:backgroundTint="#4A3B32"
-        android:textColor="#FFFFFF"/>
+        android:textStyle="bold" />
 
 </LinearLayout>

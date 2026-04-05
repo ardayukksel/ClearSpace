@@ -4,47 +4,69 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.EditText
 import android.widget.RadioGroup
+import android.widget.ViewFlipper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class OnboardingActivity : AppCompatActivity() {
+
+    private var currentStep = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
-        val rgAge = findViewById<RadioGroup>(R.id.rg_age)
+        val viewFlipper = findViewById<ViewFlipper>(R.id.view_flipper_onboarding)
         val btnNext = findViewById<Button>(R.id.btn_next)
 
+        val rgAge = findViewById<RadioGroup>(R.id.rg_age)
+        val etGoal = findViewById<EditText>(R.id.et_goal)
+
+        val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
+
         btnNext.setOnClickListener {
-            // Get the ID of the selected radio button
-            val selectedId = rgAge.checkedRadioButtonId
+            when (currentStep) {
+                0 -> {
+                    // Step 1: Validate Age Selection
+                    if (rgAge.checkedRadioButtonId == -1) {
+                        Toast.makeText(this, "Please select your age.", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+                    val selectedAge = when (rgAge.checkedRadioButtonId) {
+                        R.id.rb_age_1 -> "13-19"
+                        R.id.rb_age_2 -> "20-25"
+                        R.id.rb_age_3 -> "26-30"
+                        else -> "30+"
+                    }
+                    sharedPref.edit().putString("userAge", selectedAge).apply()
 
-            if (selectedId == -1) {
-                // No age selected
-                Toast.makeText(this, "Please select your age group", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                    // Move to Step 2
+                    viewFlipper.showNext()
+                    currentStep++
+                }
+                1 -> {
+                    // Step 2: Save Goal
+                    val goalText = etGoal.text.toString()
+                    if (goalText.isNotBlank()) {
+                        sharedPref.edit().putString("userGoal", goalText).apply()
+                    }
+
+                    // Move to Step 3
+                    viewFlipper.showNext()
+                    btnNext.text = "Get Started"
+                    currentStep++
+                }
+                2 -> {
+                    // Step 3: Finish Onboarding
+                    sharedPref.edit().putBoolean("hasCompletedOnboarding", true).apply()
+
+                    // Navigate to Main App (Home Screen)
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                }
             }
-
-            // Determine which age group was selected
-            val ageGroup = when (selectedId) {
-                R.id.rb_age_1 -> "13-19"
-                R.id.rb_age_2 -> "20-25"
-                R.id.rb_age_3 -> "26-30"
-                R.id.rb_age_4 -> "30+"
-                else -> "Unknown"
-            }
-
-            // Save the user's age group for future quizzes!
-            val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
-            sharedPref.edit().putString("userAgeGroup", ageGroup).apply()
-
-            // Move to the MainActivity
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
-
-            // Finish onboarding so user doesn't come back here
-            finish()
         }
     }
 }

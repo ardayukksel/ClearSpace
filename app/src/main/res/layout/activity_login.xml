@@ -2,47 +2,97 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/appBg"
     android:gravity="center"
-    android:padding="32dp"
-    android:background="#FAFAFA">
+    android:orientation="vertical"
+    android:padding="24dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ClearSpace"
-        android:textSize="36sp"
-        android:textStyle="bold"
-        android:textColor="#333333"
-        android:layout_marginBottom="48dp"/>
+        android:layout_marginBottom="8dp"
+        android:text="Welcome Back"
+        android:textColor="@color/b800"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:text="Log in to continue to ClearSpace"
+        android:textColor="@color/mutedDark"
+        android:textSize="14sp" />
 
     <EditText
         android:id="@+id/et_email"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:hint="Email"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_edit_text"
+        android:hint="Email address"
         android:inputType="textEmailAddress"
-        android:background="@android:drawable/edit_text"
-        android:padding="12dp"
-        android:layout_marginBottom="16dp"/>
+        android:paddingHorizontal="16dp"
+        android:textColor="@color/textPrimary"
+        android:textColorHint="@color/muted"
+        android:textSize="16sp" />
 
     <EditText
         android:id="@+id/et_password"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/bg_edit_text"
         android:hint="Password"
         android:inputType="textPassword"
-        android:background="@android:drawable/edit_text"
-        android:padding="12dp"
-        android:layout_marginBottom="32dp"/>
+        android:paddingHorizontal="16dp"
+        android:textColor="@color/textPrimary"
+        android:textColorHint="@color/muted"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_forgot_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginBottom="32dp"
+        android:text="Forgot password?"
+        android:textColor="@color/b600"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 
     <Button
         android:id="@+id/btn_login"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
-        android:text="LOGIN"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#4A3B32"
-        android:textSize="18sp"
-        android:textStyle="bold"/>
+        android:layout_height="56dp"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:text="Log In"
+        android:textAllCaps="false"
+        android:textColor="@color/surface"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New here? "
+            android:textColor="@color/mutedDark"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_signup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create an account"
+            android:textColor="@color/b600"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
 </LinearLayout>
