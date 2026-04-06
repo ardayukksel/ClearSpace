@@ -42,11 +42,12 @@ class AppMonitorService : Service() {
     }
 
     private val handler = Handler(Looper.getMainLooper())
-    private val checkInterval = 300L
+    private val checkInterval = 250L
 
     private var sessionStartTime = 0L
     private var lastKnownApp = ""
     private var isStoppingIntentionally = false
+    private var lastChallengeLaunchAt = 0L
 
     private lateinit var stateManager: ClearSpaceStateManager
 
@@ -134,6 +135,7 @@ class AppMonitorService : Service() {
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
         val isChallengeTransitioning = isInChallengeTransitionWindow()
+        val ownPackage = packageName
 
         if (!isEnabled || targetAppPackage.isBlank()) {
             Log.d(TAG, "Monitoring disabled or no target app selected.")
@@ -149,8 +151,11 @@ class AppMonitorService : Service() {
             lastKnownApp = currentForegroundApp
         }
 
-        val effectiveForegroundApp = lastKnownApp
-        val ownPackage = packageName
+        val effectiveForegroundApp = when {
+            currentForegroundApp.isNotBlank() -> currentForegroundApp
+            lastKnownApp.isNotBlank() -> lastKnownApp
+            else -> ""
+        }
 
         Log.d(
             TAG,
@@ -158,39 +163,40 @@ class AppMonitorService : Service() {
         )
 
         if (effectiveForegroundApp.isBlank()) {
-            Log.d(TAG, "No known foreground app yet.")
             return
         }
 
         if (isLocked) {
+            resetSessionOnly()
+
             if (isChallengeTransitioning) {
-                Log.d(TAG, "Challenge transition window active. Suppressing overlay.")
                 stopOverlayIfNeeded()
-                resetSessionOnly()
                 return
             }
 
             if (isChallengeActive) {
                 stopOverlayIfNeeded()
 
-                if (effectiveForegroundApp != ownPackage && !ChallengeActivity.isVisible) {
-                    Log.d(TAG, "Challenge is active and user is outside ClearSpace. Relaunching challenge.")
-                    launchChallengeActivity()
+                if (effectiveForegroundApp != ownPackage) {
+                    relaunchChallengeIfNeeded()
                 }
 
-                resetSessionOnly()
                 return
             }
 
-            // While locked and before challenge starts, keep overlay enforced
-            // even if the user goes home or switches to another app.
-            if (effectiveForegroundApp != ownPackage) {
-                Log.d(TAG, "Locked state active outside ClearSpace. Enforcing overlay globally.")
+            // Locked but challenge not started yet:
+            // keep overlay enforced globally over any app/home screen,
+            // and if user somehow gets back into the target app, keep re-enforcing.
+            if (!OverlayService.isRunning) {
                 ensureOverlayShowing()
-                return
             }
 
-            resetSessionOnly()
+            // If the user gets back to the target app or any other app while locked,
+            // keep the overlay alive globally.
+            if (effectiveForegroundApp != ownPackage || effectiveForegroundApp == targetAppPackage) {
+                ensureOverlayShowing()
+            }
+
             return
         }
 
@@ -201,7 +207,7 @@ class AppMonitorService : Service() {
             }
 
             val currentSessionTimeMs = System.currentTimeMillis() - sessionStartTime
-            val limitMs = timeLimitMinutes * 60 * 1000L
+            val limitMs = timeLimitMinutes.coerceAtLeast(1) * 60 * 1000L
 
             Log.d(TAG, "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s")
 
@@ -218,7 +224,10 @@ class AppMonitorService : Service() {
             }
 
             resetSessionOnly()
-            stopOverlayIfNeeded()
+
+            if (!isLocked) {
+                stopOverlayIfNeeded()
+            }
         }
     }
 
@@ -237,6 +246,16 @@ class AppMonitorService : Service() {
             val overlayIntent = Intent(this, OverlayService::class.java)
             startService(overlayIntent)
         }
+    }
+
+    private fun relaunchChallengeIfNeeded() {
+        val now = System.currentTimeMillis()
+        if (now - lastChallengeLaunchAt < 700L) {
+            return
+        }
+
+        lastChallengeLaunchAt = now
+        launchChallengeActivity()
     }
 
     private fun launchChallengeActivity() {
@@ -344,6 +363,7 @@ class AppMonitorService : Service() {
     private fun resetAllTrackingState() {
         sessionStartTime = 0L
         lastKnownApp = ""
+        lastChallengeLaunchAt = 0L
         clearChallengeTransitionWindow()
         stateManager.resetLockState()
     }
