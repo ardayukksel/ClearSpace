@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="48dp"
-        android:text="Complete the breathing exercise to unlock."
+        android:text="Complete the breathing exercise to continue."
         android:textAlignment="center"
         android:textColor="@color/b300"
         android:textSize="16sp" />
@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:backgroundTint="@color/sage"
-        android:text="Unlock App"
+        android:text="Continue to Challenge"
         android:textColor="@color/surface"
         android:textSize="16sp"
         android:textStyle="bold" />
