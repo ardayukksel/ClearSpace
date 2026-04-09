@@ -37,7 +37,7 @@ class DashboardActivity : AppCompatActivity() {
         val timeLimit = stateManager.getTimeLimitMinutes()
         val monitoringEnabled = stateManager.isMonitoringEnabled()
 
-        tvDashboardApp.text = "Blocked App: ${if (targetAppName == "None") "Not selected" else targetAppName}"
+        tvDashboardApp.text = "Blocked App: ${targetAppName ?: "Not selected"}"
         tvDashboardLimit.text = "Current Limit: $timeLimit min"
         tvDashboardMonitoring.text = "Monitoring: ${if (monitoringEnabled) "ON" else "OFF"}"
 

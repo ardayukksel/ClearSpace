@@ -124,7 +124,14 @@ class MainActivity : AppCompatActivity() {
             if (!appName.isNullOrBlank() && !packageName.isNullOrBlank()) {
                 selectedTargetName = appName
                 selectedTargetPackage = packageName
+
+                // IMPORTANT FIX:
+                // Save immediately so onResume() won't restore an old app like Instagram.
+                stateManager.saveTargetApp(appName, packageName)
+
                 refreshSelectedAppUI()
+
+                Toast.makeText(this, "$appName selected", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -135,8 +142,8 @@ class MainActivity : AppCompatActivity() {
         val savedTargetPackage = stateManager.getTargetAppPackage()
         val savedTargetName = stateManager.getTargetAppName()
 
-        selectedTargetPackage = if (savedTargetPackage.isBlank()) null else savedTargetPackage
-        selectedTargetName = if (savedTargetName == "None") null else savedTargetName
+        selectedTargetPackage = savedTargetPackage
+        selectedTargetName = savedTargetName
 
         switchTarget.isChecked = isEnabled
         seekbarSession.progress = savedTimeLimit
@@ -147,7 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshSelectedAppUI() {
-        val appName = selectedTargetName ?: "None"
+        val appName = if (selectedTargetName.isNullOrBlank()) "None" else selectedTargetName
         tvSelectedApp.text = "Selected App: $appName"
         btnChooseApp.text = if (selectedTargetName.isNullOrBlank()) "Choose App" else "Change App"
     }

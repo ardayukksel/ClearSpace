@@ -131,7 +131,7 @@ class AppMonitorService : Service() {
 
         val isEnabled = stateManager.isMonitoringEnabled()
         val timeLimitMinutes = stateManager.getTimeLimitMinutes()
-        val targetAppPackage = stateManager.getTargetAppPackage()
+        val targetAppPackage = stateManager.getTargetAppPackage().orEmpty()
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
         val isChallengeTransitioning = isInChallengeTransitionWindow()

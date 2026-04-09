@@ -17,7 +17,7 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun getTargetAppName(): String {
-        return prefs.getString(AppMonitorService.KEY_TARGET_APP_NAME, "None") ?: "None"
+        return prefs.getString(AppMonitorService.KEY_TARGET_APP_NAME, "") ?: ""
     }
 
     fun getTargetAppPackage(): String {
