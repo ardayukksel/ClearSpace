@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/appBg"
@@ -24,31 +25,47 @@
         android:textColor="@color/mutedDark"
         android:textSize="14sp" />
 
-    <EditText
-        android:id="@+id/et_email"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/bg_edit_text"
-        android:hint="Email address"
-        android:inputType="textEmailAddress"
-        android:paddingHorizontal="16dp"
-        android:textColor="@color/textPrimary"
-        android:textColorHint="@color/muted"
-        android:textSize="16sp" />
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        app:hintEnabled="false">
 
-    <EditText
-        android:id="@+id/et_password"
+        <EditText
+            android:id="@+id/et_email"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_edit_text"
+            android:hint="Email address"
+            android:inputType="textEmailAddress"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/b800"
+            android:textColorHint="@color/muted" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:background="@drawable/bg_edit_text"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:paddingHorizontal="16dp"
-        android:textColor="@color/textPrimary"
-        android:textColorHint="@color/muted"
-        android:textSize="16sp" />
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        app:hintEnabled="false"
+        app:passwordToggleEnabled="true"
+        app:passwordToggleTint="@color/muted">
+
+        <EditText
+            android:id="@+id/et_password"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_edit_text"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/b800"
+            android:textColorHint="@color/muted" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
         android:id="@+id/tv_forgot_password"
@@ -89,10 +106,9 @@
             android:id="@+id/tv_signup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Create an account"
+            android:text="Sign up"
             android:textColor="@color/b600"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>
-
 </LinearLayout>

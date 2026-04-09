@@ -32,8 +32,7 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // TODO: 실제 백엔드 연동 시 여기에 인증 로직 추가
-
+            // TODO: 백엔드 연동 시 실제 인증 로직 추가
             val name = email.split("@")[0].replace(Regex("[._]"), " ")
             sharedPref.edit()
                 .putString("userName", name)
@@ -51,13 +50,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         tvForgotPassword.setOnClickListener {
-            Toast.makeText(this, "Navigate to Forgot Password", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Forgot Password screen coming soon!", Toast.LENGTH_SHORT).show()
+            // 추후 ForgotPasswordActivity 생성 후 주석 해제
             // startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
         tvSignup.setOnClickListener {
-            Toast.makeText(this, "Navigate to Sign Up", Toast.LENGTH_SHORT).show()
-            // startActivity(Intent(this, SignupActivity::class.java))
+            // 회원가입 화면으로 이동
+            startActivity(Intent(this, SignupActivity::class.java))
         }
     }
 }

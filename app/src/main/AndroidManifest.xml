@@ -57,6 +57,10 @@
             android:name=".DashboardActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".SignupActivity"
+            android:exported="false" />
+
         <service
             android:name=".OverlayService"
             android:exported="false" />

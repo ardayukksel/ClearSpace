@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/appBg"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tv_back_to_login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Back"
+        android:textColor="@color/b600"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Create Account"
+        android:textColor="@color/b800"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="32dp"
+        android:text="Start your journey to better focus."
+        android:textColor="@color/mutedDark"
+        android:textSize="14sp" />
+
+    <EditText
+        android:id="@+id/et_signup_name"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_edit_text"
+        android:hint="Full Name"
+        android:inputType="textPersonName"
+        android:paddingHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/b800"
+        android:textColorHint="@color/muted" />
+
+    <EditText
+        android:id="@+id/et_signup_email"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_edit_text"
+        android:hint="Email address"
+        android:inputType="textEmailAddress"
+        android:paddingHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        android:textColor="@color/b800"
+        android:textColorHint="@color/muted" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        app:hintEnabled="false"
+        app:passwordToggleEnabled="true"
+        app:passwordToggleTint="@color/muted">
+
+        <EditText
+            android:id="@+id/et_signup_password"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_edit_text"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/b800"
+            android:textColorHint="@color/muted" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btn_create_account"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_btn_gradient"
+        android:text="Create Account"
+        android:textAllCaps="false"
+        android:textColor="@color/surface"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>

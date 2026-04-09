@@ -106,9 +106,15 @@ class MainActivity : AppCompatActivity() {
         val monitorIntent = Intent(this, AppMonitorService::class.java)
 
         if (isTargetSelected) {
-            // Determine target package based on user's selection (Mocking real app packages)
-            val targetPackage = if (isInstagramSelected) "com.instagram.android" else "com.zhiliaoapp.musically"
-            stateManager.saveTargetApp("Selected App", targetPackage)
+            val targetPackages = mutableSetOf<String>()
+            if (isInstagramSelected) {
+                targetPackages.add("com.instagram.android")
+            }
+            if (isTiktokSelected) {
+                targetPackages.add("com.zhiliaoapp.musically")
+            }
+
+            stateManager.saveTargetAppPackages(targetPackages)
 
             monitorIntent.action = AppMonitorService.ACTION_START_MONITORING
             Toast.makeText(this, "Monitoring started. Limit: $selectedTime min", Toast.LENGTH_SHORT).show()
