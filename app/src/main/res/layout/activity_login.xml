@@ -12,17 +12,19 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="Welcome Back"
-        android:textColor="@color/b800"
-        android:textSize="28sp"
-        android:textStyle="bold" />
+        android:textColor="@color/b900"
+        android:textSize="30sp"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="40dp"
+        android:layout_marginBottom="36dp"
         android:text="Log in to continue to ClearSpace"
         android:textColor="@color/mutedDark"
-        android:textSize="14sp" />
+        android:textSize="14sp"
+        android:fontFamily="sans-serif" />
 
     <EditText
         android:id="@+id/et_email"
@@ -35,7 +37,8 @@
         android:paddingHorizontal="16dp"
         android:textColor="@color/textPrimary"
         android:textColorHint="@color/muted"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:fontFamily="sans-serif" />
 
     <EditText
         android:id="@+id/et_password"
@@ -48,30 +51,33 @@
         android:paddingHorizontal="16dp"
         android:textColor="@color/textPrimary"
         android:textColorHint="@color/muted"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:fontFamily="sans-serif" />
 
     <TextView
         android:id="@+id/tv_forgot_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="28dp"
         android:text="Forgot password?"
         android:textColor="@color/b600"
         android:textSize="13sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
 
     <Button
         android:id="@+id/btn_login"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginBottom="24dp"
-        android:background="@drawable/bg_btn_gradient"
+        android:backgroundTint="@color/b800"
         android:text="Log In"
         android:textAllCaps="false"
-        android:textColor="@color/surface"
+        android:textColor="@color/white"
         android:textSize="16sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -83,7 +89,8 @@
             android:layout_height="wrap_content"
             android:text="New here? "
             android:textColor="@color/mutedDark"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:fontFamily="sans-serif" />
 
         <TextView
             android:id="@+id/tv_signup"
@@ -92,7 +99,8 @@
             android:text="Create an account"
             android:textColor="@color/b600"
             android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
     </LinearLayout>
 
 </LinearLayout>

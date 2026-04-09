@@ -1,10 +1,10 @@
 package com.example.clearspace
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Switch
 import android.widget.TextView
@@ -16,11 +16,13 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var switchTarget: Switch
     private lateinit var tvSessionLimit: TextView
-    private lateinit var seekbarSession: SeekBar
+    private lateinit var tvSelectedApp: TextView
+    private lateinit var tvMonitoringStatus: TextView
+    private lateinit var btnChooseApp: Button
     private lateinit var btnSave: Button
-
-    private lateinit var btnAppInstagram: LinearLayout
-    private lateinit var btnAppTiktok: LinearLayout
+    private lateinit var btnSetup: Button
+    private lateinit var btnDashboard: Button
+    private lateinit var seekbarSession: SeekBar
 
     private lateinit var stateManager: ClearSpaceStateManager
 
@@ -28,8 +30,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedTargetName: String? = null
 
     companion object {
-        private const val INSTAGRAM_PACKAGE = "com.instagram.android"
-        private const val TIKTOK_PACKAGE = "com.zhiliaoapp.musically"
+        private const val REQUEST_PICK_APP = 2001
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,23 +41,18 @@ class MainActivity : AppCompatActivity() {
 
         switchTarget = findViewById(R.id.switch_target_app)
         tvSessionLimit = findViewById(R.id.tv_session_limit)
-        seekbarSession = findViewById(R.id.seekbar_session)
+        tvSelectedApp = findViewById(R.id.tv_selected_app)
+        tvMonitoringStatus = findViewById(R.id.tv_monitoring_status)
+        btnChooseApp = findViewById(R.id.btn_choose_app)
         btnSave = findViewById(R.id.btn_save)
-        btnAppInstagram = findViewById(R.id.btn_app_instagram)
-        btnAppTiktok = findViewById(R.id.btn_app_tiktok)
+        btnSetup = findViewById(R.id.btn_setup)
+        btnDashboard = findViewById(R.id.btn_dashboard)
+        seekbarSession = findViewById(R.id.seekbar_session)
 
         restoreSavedState()
 
-        btnAppInstagram.setOnClickListener {
-            selectApp("Instagram", INSTAGRAM_PACKAGE)
-        }
-
-        btnAppTiktok.setOnClickListener {
-            selectApp("TikTok", TIKTOK_PACKAGE)
-        }
-
         switchTarget.setOnCheckedChangeListener { _, isChecked ->
-            updateSliderState(isChecked)
+            updateUIState(isChecked)
         }
 
         seekbarSession.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
@@ -65,10 +61,22 @@ class MainActivity : AppCompatActivity() {
                 tvSessionLimit.text = "Session Limit: $displayTime min"
             }
 
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
         })
+
+        btnChooseApp.setOnClickListener {
+            val intent = Intent(this, AppPickerActivity::class.java)
+            startActivityForResult(intent, REQUEST_PICK_APP)
+        }
+
+        btnSetup.setOnClickListener {
+            startActivity(Intent(this, SetupActivity::class.java))
+        }
+
+        btnDashboard.setOnClickListener {
+            startActivity(Intent(this, DashboardActivity::class.java))
+        }
 
         btnSave.setOnClickListener {
             val monitoringEnabled = switchTarget.isChecked
@@ -80,7 +88,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (selectedTargetPackage.isNullOrBlank() || selectedTargetName.isNullOrBlank()) {
-                Toast.makeText(this, "Please select an app to block.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Please choose an app to block.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
@@ -105,52 +113,50 @@ class MainActivity : AppCompatActivity() {
         restoreSavedState()
     }
 
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_PICK_APP && resultCode == Activity.RESULT_OK) {
+            val appName = data?.getStringExtra(AppPickerActivity.EXTRA_APP_NAME)
+            val packageName = data?.getStringExtra(AppPickerActivity.EXTRA_APP_PACKAGE)
+
+            if (!appName.isNullOrBlank() && !packageName.isNullOrBlank()) {
+                selectedTargetName = appName
+                selectedTargetPackage = packageName
+                refreshSelectedAppUI()
+            }
+        }
+    }
+
     private fun restoreSavedState() {
         val isEnabled = stateManager.isMonitoringEnabled()
         val savedTimeLimit = stateManager.getTimeLimitMinutes().coerceAtLeast(1)
         val savedTargetPackage = stateManager.getTargetAppPackage()
         val savedTargetName = stateManager.getTargetAppName()
 
+        selectedTargetPackage = if (savedTargetPackage.isBlank()) null else savedTargetPackage
+        selectedTargetName = if (savedTargetName == "None") null else savedTargetName
+
         switchTarget.isChecked = isEnabled
         seekbarSession.progress = savedTimeLimit
         tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
-        updateSliderState(isEnabled)
 
-        when (savedTargetPackage) {
-            INSTAGRAM_PACKAGE -> {
-                selectedTargetPackage = INSTAGRAM_PACKAGE
-                selectedTargetName = if (savedTargetName.isBlank()) "Instagram" else savedTargetName
-            }
-            TIKTOK_PACKAGE -> {
-                selectedTargetPackage = TIKTOK_PACKAGE
-                selectedTargetName = if (savedTargetName.isBlank()) "TikTok" else savedTargetName
-            }
-            else -> {
-                selectedTargetPackage = null
-                selectedTargetName = null
-            }
-        }
-
-        refreshAppSelectionUI()
+        refreshSelectedAppUI()
+        updateUIState(isEnabled)
     }
 
-    private fun selectApp(appName: String, packageName: String) {
-        selectedTargetName = appName
-        selectedTargetPackage = packageName
-        refreshAppSelectionUI()
+    private fun refreshSelectedAppUI() {
+        val appName = selectedTargetName ?: "None"
+        tvSelectedApp.text = "Selected App: $appName"
+        btnChooseApp.text = if (selectedTargetName.isNullOrBlank()) "Choose App" else "Change App"
     }
 
-    private fun refreshAppSelectionUI() {
-        val instagramSelected = selectedTargetPackage == INSTAGRAM_PACKAGE
-        val tiktokSelected = selectedTargetPackage == TIKTOK_PACKAGE
-
-        btnAppInstagram.alpha = if (instagramSelected) 1.0f else 0.45f
-        btnAppTiktok.alpha = if (tiktokSelected) 1.0f else 0.45f
-    }
-
-    private fun updateSliderState(isEnabled: Boolean) {
+    private fun updateUIState(isEnabled: Boolean) {
         seekbarSession.isEnabled = isEnabled
-        tvSessionLimit.alpha = if (isEnabled) 1.0f else 0.4f
+        tvSessionLimit.alpha = if (isEnabled) 1.0f else 0.45f
+        tvMonitoringStatus.text = if (isEnabled) "Monitoring Status: ON" else "Monitoring Status: OFF"
+        tvMonitoringStatus.alpha = if (isEnabled) 1.0f else 0.7f
     }
 
     private fun startMonitoringFlow(selectedTime: Int) {
@@ -173,6 +179,8 @@ class MainActivity : AppCompatActivity() {
             startService(monitorIntent)
         }
 
+        updateUIState(true)
+
         Toast.makeText(
             this,
             "Monitoring started for $appName. Limit: $selectedTime min",
@@ -190,6 +198,8 @@ class MainActivity : AppCompatActivity() {
             action = AppMonitorService.ACTION_STOP_MONITORING
         }
         startService(monitorIntent)
+
+        updateUIState(false)
 
         Toast.makeText(this, "Monitoring is OFF", Toast.LENGTH_SHORT).show()
     }

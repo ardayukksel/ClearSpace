@@ -1,144 +1,208 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/appBg"
-    android:orientation="vertical"
-    android:padding="24dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="ClearSpace"
-        android:textColor="@color/b800"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="24dp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="What do you want to block?"
-        android:textColor="@color/b800"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
-
-    <GridLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:columnCount="2"
-        android:rowCount="1"
-        android:layout_marginBottom="32dp">
-
-        <LinearLayout
-            android:id="@+id/btn_app_instagram"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/bg_edit_text"
-            android:padding="16dp"
-            android:layout_marginEnd="8dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📸"
-                android:textSize="32sp" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Instagram"
-                android:textSize="14sp"
-                android:textColor="@color/b700"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btn_app_tiktok"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_columnWeight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/bg_edit_text"
-            android:padding="16dp"
-            android:layout_marginStart="8dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🎵"
-                android:textSize="32sp" />
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TikTok"
-                android:textSize="14sp"
-                android:textColor="@color/b700"
-                android:textStyle="bold"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
-    </GridLayout>
+    android:fillViewport="true"
+    android:background="@color/appBg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:background="@drawable/bg_edit_text"
-        android:padding="16dp"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="24dp">
+        android:orientation="vertical"
+        android:padding="24dp">
 
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Enable Blocking"
-            android:textColor="@color/b800"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <Switch
-            android:id="@+id/switch_target_app"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="ClearSpace"
+            android:textColor="@color/b900"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="24dp"
+            android:text="Block any installed app and force a reset when your session limit is reached."
+            android:textColor="@color/textSecondary"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:background="@drawable/bg_edit_text"
+            android:layout_marginBottom="18dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Current Status"
+                android:textColor="@color/b800"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/tv_monitoring_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Monitoring Status: OFF"
+                android:textColor="@color/sageDark"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/tv_selected_app"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Selected App: None"
+                android:textColor="@color/textSecondary"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dp">
+
+            <Button
+                android:id="@+id/btn_choose_app"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/b800"
+                android:text="Choose App"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <Button
+                android:id="@+id/btn_setup"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/sage"
+                android:text="Setup"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_dashboard"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginBottom="20dp"
+            android:backgroundTint="@color/surface"
+            android:text="Open Dashboard"
+            android:textAllCaps="false"
+            android:textColor="@color/b800"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="18dp"
+            android:background="@drawable/bg_edit_text"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="20dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Enable Blocking"
+                    android:textColor="@color/b800"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Turn monitoring on for the selected app."
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp"
+                    android:fontFamily="sans-serif" />
+            </LinearLayout>
+
+            <Switch
+                android:id="@+id/switch_target_app"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:background="@drawable/bg_edit_text"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:id="@+id/tv_session_limit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Session Limit: 10 min"
+                android:textColor="@color/b800"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp"
+                android:text="Choose how long the app can be used before ClearSpace locks it."
+                android:textColor="@color/textSecondary"
+                android:textSize="13sp"
+                android:fontFamily="sans-serif" />
+
+            <SeekBar
+                android:id="@+id/seekbar_session"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="300"
+                android:progress="10"
+                android:progressTint="@color/sageDark"
+                android:thumbTint="@color/b800" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:backgroundTint="@color/b800"
+            android:text="Save Settings"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
+
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/tv_session_limit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Session Limit: 10 min"
-        android:textColor="@color/mutedDark"
-        android:textSize="14sp"
-        android:layout_marginBottom="8dp" />
-
-    <SeekBar
-        android:id="@+id/seekbar_session"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:max="300"
-        android:progress="10"
-        android:progressTint="@color/b700"
-        android:thumbTint="@color/b800"
-        android:layout_marginBottom="32dp" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-    <Button
-        android:id="@+id/btn_save"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@drawable/bg_btn_gradient"
-        android:text="Save Settings"
-        android:textAllCaps="false"
-        android:textColor="@color/surface"
-        android:textSize="16sp"
-        android:textStyle="bold" />
-
-</LinearLayout>
+</ScrollView>

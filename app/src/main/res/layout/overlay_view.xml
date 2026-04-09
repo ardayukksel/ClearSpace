@@ -10,46 +10,40 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="Pause &amp; Reflect"
+        android:layout_marginBottom="12dp"
+        android:text="Time Limit Reached"
         android:textAlignment="center"
         android:textColor="@color/surface"
-        android:textSize="32sp"
+        android:textSize="30sp"
         android:textStyle="bold" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="48dp"
-        android:text="Complete the breathing exercise to continue."
+        android:layout_marginBottom="18dp"
+        android:text="ClearSpace has paused this app."
         android:textAlignment="center"
-        android:textColor="@color/b300"
+        android:textColor="@color/b100"
         android:textSize="16sp" />
 
-    <FrameLayout
-        android:layout_width="150dp"
-        android:layout_height="150dp"
-        android:layout_marginBottom="48dp"
-        android:background="@drawable/bg_btn_gradient">
-
-        <TextView
-            android:id="@+id/tv_breath_phase"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="Breathe In"
-            android:textColor="@color/surface"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-    </FrameLayout>
+    <TextView
+        android:id="@+id/tv_breath_phase"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="40dp"
+        android:text="Complete the guided breathing challenge to continue."
+        android:textAlignment="center"
+        android:textColor="@color/b300"
+        android:textSize="15sp" />
 
     <Button
         android:id="@+id/btn_continue_challenge"
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:backgroundTint="@color/sage"
-        android:text="Continue to Challenge"
-        android:textColor="@color/surface"
+        android:text="Start Challenge"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
         android:textSize="16sp"
         android:textStyle="bold" />
 
