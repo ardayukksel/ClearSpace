@@ -8,11 +8,6 @@ class ClearSpaceStateManager(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
 
-    companion object {
-        const val KEY_TARGET_APP_PACKAGES = "targetAppPackages" // 다중 앱 차단용 키
-        const val KEY_SAVED_CHALLENGE = "savedChallenge" // 챌린지 종류(예: breathing)
-    }
-
     fun isMonitoringEnabled(): Boolean {
         return prefs.getBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
     }
@@ -21,25 +16,12 @@ class ClearSpaceStateManager(context: Context) {
         return prefs.getInt(AppMonitorService.KEY_TIME_LIMIT, 10).coerceAtLeast(1)
     }
 
-    // 변경됨: 단일 String이 아닌 Set<String>으로 여러 앱 패키지명 반환
-    fun getTargetAppPackages(): Set<String> {
-        return prefs.getStringSet(KEY_TARGET_APP_PACKAGES, emptySet()) ?: emptySet()
+    fun getTargetAppName(): String {
+        return prefs.getString(AppMonitorService.KEY_TARGET_APP_NAME, "") ?: ""
     }
 
-    // 변경됨: 여러 앱 패키지명을 저장
-    fun saveTargetAppPackages(packages: Set<String>) {
-        prefs.edit()
-            .putStringSet(KEY_TARGET_APP_PACKAGES, packages)
-            .apply()
-    }
-
-    // React의 Context (ChallengeScreen) 대응
-    fun getSavedChallenge(): String {
-        return prefs.getString(KEY_SAVED_CHALLENGE, "breathing") ?: "breathing"
-    }
-
-    fun saveChallenge(challengeType: String) {
-        prefs.edit().putString(KEY_SAVED_CHALLENGE, challengeType).apply()
+    fun getTargetAppPackage(): String {
+        return prefs.getString(AppMonitorService.KEY_TARGET_APP_PACKAGE, "") ?: ""
     }
 
     fun isLocked(): Boolean {
@@ -48,6 +30,13 @@ class ClearSpaceStateManager(context: Context) {
 
     fun isChallengeActive(): Boolean {
         return prefs.getBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
+    }
+
+    fun saveTargetApp(appName: String, packageName: String) {
+        prefs.edit()
+            .putString(AppMonitorService.KEY_TARGET_APP_NAME, appName)
+            .putString(AppMonitorService.KEY_TARGET_APP_PACKAGE, packageName)
+            .apply()
     }
 
     fun saveMonitoringSettings(enabled: Boolean, timeLimitMinutes: Int) {
@@ -87,6 +76,7 @@ class ClearSpaceStateManager(context: Context) {
         return prefs.edit()
             .putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
             .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
+            .putBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
             .commit()
     }
 }

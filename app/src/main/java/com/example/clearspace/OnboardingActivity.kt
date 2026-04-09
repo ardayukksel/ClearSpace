@@ -6,8 +6,8 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.RadioGroup
-import android.widget.ViewFlipper
 import android.widget.Toast
+import android.widget.ViewFlipper
 import androidx.appcompat.app.AppCompatActivity
 
 class OnboardingActivity : AppCompatActivity() {
@@ -29,40 +29,35 @@ class OnboardingActivity : AppCompatActivity() {
         btnNext.setOnClickListener {
             when (currentStep) {
                 0 -> {
-                    // Step 1: Validate Age Selection
                     if (rgAge.checkedRadioButtonId == -1) {
                         Toast.makeText(this, "Please select your age.", Toast.LENGTH_SHORT).show()
                         return@setOnClickListener
                     }
+
                     val selectedAge = when (rgAge.checkedRadioButtonId) {
                         R.id.rb_age_1 -> "13-19"
                         R.id.rb_age_2 -> "20-25"
                         R.id.rb_age_3 -> "26-30"
                         else -> "30+"
                     }
-                    sharedPref.edit().putString("userAge", selectedAge).apply()
 
-                    // Move to Step 2
+                    sharedPref.edit().putString("userAge", selectedAge).apply()
                     viewFlipper.showNext()
                     currentStep++
                 }
+
                 1 -> {
-                    // Step 2: Save Goal
-                    val goalText = etGoal.text.toString()
+                    val goalText = etGoal.text.toString().trim()
                     if (goalText.isNotBlank()) {
                         sharedPref.edit().putString("userGoal", goalText).apply()
                     }
-
-                    // Move to Step 3
                     viewFlipper.showNext()
                     btnNext.text = "Get Started"
                     currentStep++
                 }
-                2 -> {
-                    // Step 3: Finish Onboarding
-                    sharedPref.edit().putBoolean("hasCompletedOnboarding", true).apply()
 
-                    // Navigate to Main App (Home Screen)
+                2 -> {
+                    sharedPref.edit().putBoolean("hasCompletedOnboarding", true).apply()
                     startActivity(Intent(this, MainActivity::class.java))
                     finish()
                 }

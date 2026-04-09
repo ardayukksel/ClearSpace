@@ -63,7 +63,9 @@ class OverlayService : Service() {
             else
                 WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.CENTER
@@ -89,7 +91,7 @@ class OverlayService : Service() {
                 .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, true)
                 .putLong(
                     AppMonitorService.KEY_CHALLENGE_TRANSITION_UNTIL,
-                    System.currentTimeMillis() + 1500L
+                    System.currentTimeMillis() + 1200L
                 )
                 .commit()
 

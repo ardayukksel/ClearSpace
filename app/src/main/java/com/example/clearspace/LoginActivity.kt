@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class LoginActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -24,18 +25,17 @@ class LoginActivity : AppCompatActivity() {
         val hasCompletedOnboarding = sharedPref.getBoolean("hasCompletedOnboarding", false)
 
         btnLogin.setOnClickListener {
-            val email = etEmail.text.toString()
-            val password = etPassword.text.toString()
+            val email = etEmail.text.toString().trim()
+            val password = etPassword.text.toString().trim()
 
             if (email.isBlank() || password.isBlank()) {
                 Toast.makeText(this, "Please enter your email and password.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            // TODO: 백엔드 연동 시 실제 인증 로직 추가
-            val name = email.split("@")[0].replace(Regex("[._]"), " ")
+            val name = email.substringBefore("@").replace(Regex("[._]"), " ").trim()
             sharedPref.edit()
-                .putString("userName", name)
+                .putString("userName", if (name.isBlank()) "User" else name)
                 .putString("userEmail", email)
                 .apply()
 
@@ -50,14 +50,11 @@ class LoginActivity : AppCompatActivity() {
         }
 
         tvForgotPassword.setOnClickListener {
-            Toast.makeText(this, "Forgot Password screen coming soon!", Toast.LENGTH_SHORT).show()
-            // 추후 ForgotPasswordActivity 생성 후 주석 해제
-            // startActivity(Intent(this, ForgotPasswordActivity::class.java))
+            Toast.makeText(this, "Forgot Password flow not implemented yet.", Toast.LENGTH_SHORT).show()
         }
 
         tvSignup.setOnClickListener {
-            // 회원가입 화면으로 이동
-            startActivity(Intent(this, SignupActivity::class.java))
+            Toast.makeText(this, "Sign Up flow not implemented yet.", Toast.LENGTH_SHORT).show()
         }
     }
 }

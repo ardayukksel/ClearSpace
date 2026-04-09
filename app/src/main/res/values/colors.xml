@@ -28,4 +28,10 @@
     <color name="sage">#7A9E82</color>
     <color name="sageSoft">#EAF2EB</color>
     <color name="sageDark">#5A7E62</color>
+
+    <color name="challengeBg">#4A3B32</color>
+    <color name="challengeText">#F5F4F0</color>
+    <color name="challengeSubtext">#D9D3C9</color>
+    <color name="challengeButton">#F5F4F0</color>
+    <color name="challengeButtonText">#4A3B32</color>
 </resources>
