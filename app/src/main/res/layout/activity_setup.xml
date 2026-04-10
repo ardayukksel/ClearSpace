@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/appBg">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="System Setup"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/b900"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btn_usage_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Usage Stats Permission"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_overlay_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Overlay Permission"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/btn_accessibility_permission"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Accessibility Permission"
+        android:layout_marginBottom="24dp"/>
+
+    <Button
+        android:id="@+id/btn_done"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Done"
+        android:backgroundTint="@color/b800"
+        android:textColor="@color/white"/>
+
+</LinearLayout>

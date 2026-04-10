@@ -2,27 +2,61 @@ package com.example.clearspace
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.InputType
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
+import android.graphics.Typeface
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class LoginActivity : AppCompatActivity() {
 
+    private var isPasswordVisible = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        val tvSubtitle = findViewById<TextView>(R.id.tv_login_subtitle)
         val etEmail = findViewById<EditText>(R.id.et_email)
         val etPassword = findViewById<EditText>(R.id.et_password)
+        val ivTogglePassword = findViewById<ImageView>(R.id.iv_toggle_password)
         val btnLogin = findViewById<Button>(R.id.btn_login)
         val tvForgotPassword = findViewById<TextView>(R.id.tv_forgot_password)
         val tvSignup = findViewById<TextView>(R.id.tv_signup)
 
+        // Style subtitle with colored text
+        val subtitleText = "Sign in to continue your focus journey"
+        val spannableSubtitle = SpannableString(subtitleText)
+        val startIndex = subtitleText.indexOf("focus journey")
+        val endIndex = startIndex + "focus journey".length
+        spannableSubtitle.setSpan(ForegroundColorSpan(Color.parseColor("#4CAF50")), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableSubtitle.setSpan(StyleSpan(Typeface.BOLD), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        tvSubtitle.text = spannableSubtitle
+
         val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
         val hasCompletedOnboarding = sharedPref.getBoolean("hasCompletedOnboarding", false)
+
+        // Password visibility toggle
+        ivTogglePassword.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
+                etPassword.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                ivTogglePassword.setImageResource(R.drawable.ic_visibility)
+            } else {
+                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                ivTogglePassword.setImageResource(R.drawable.ic_visibility_off)
+            }
+            etPassword.setSelection(etPassword.text.length)
+        }
 
         btnLogin.setOnClickListener {
             val email = etEmail.text.toString().trim()
@@ -54,7 +88,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         tvSignup.setOnClickListener {
-            Toast.makeText(this, "Sign Up flow not implemented yet.", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, SignupActivity::class.java))
         }
     }
 }
