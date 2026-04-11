@@ -69,6 +69,11 @@
             android:name=".SignupActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ClearSpace"/>
+
         <service
             android:name=".OverlayService"
             android:exported="false" />
