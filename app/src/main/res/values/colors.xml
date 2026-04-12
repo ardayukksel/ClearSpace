@@ -34,4 +34,12 @@
     <color name="challengeSubtext">#D9D3C9</color>
     <color name="challengeButton">#F5F4F0</color>
     <color name="challengeButtonText">#4A3B32</color>
+
+    <!-- Onboarding specific -->
+    <color name="card_background">#FDFAF6</color>
+    <color name="card_selected">#EDD8BA</color>
+    <color name="step_active">#7A5240</color>
+    <color name="step_inactive">#E8DDD0</color>
+    <color name="step_completed">#5A7E62</color>
+    <color name="inspiration_bg">#FDF9F5</color>
 </resources>
