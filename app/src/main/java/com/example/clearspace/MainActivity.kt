@@ -1,213 +1,267 @@
 package com.example.clearspace
 
-import android.app.Activity
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.widget.Button
-import android.widget.SeekBar
-import android.widget.Switch
+import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.clearspace.utils.PermissionUtils
+import androidx.appcompat.widget.SwitchCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
+import com.google.android.material.slider.Slider
+import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var switchTarget: Switch
-    private lateinit var tvSessionLimit: TextView
-    private lateinit var tvSelectedApp: TextView
-    private lateinit var tvMonitoringStatus: TextView
-    private lateinit var btnChooseApp: Button
-    private lateinit var btnSave: Button
-    private lateinit var btnSetup: Button
-    private lateinit var btnDashboard: Button
-    private lateinit var seekbarSession: SeekBar
+    // Views
+    private lateinit var tvGreeting: TextView
+    private lateinit var tvUserName: TextView
+    private lateinit var tvBlockingStatus: TextView
+    private lateinit var tvSessionTime: TextView
+    private lateinit var tvSessionDescription: TextView
+    private lateinit var switchBlocking: SwitchCompat
+    private lateinit var sliderSessionLimit: Slider
+    private lateinit var chipGroupTime: ChipGroup
+    private lateinit var btnAddApp: Button
+    private lateinit var btnSaveSettings: Button
+    private lateinit var btnNotification: ImageButton
+    private lateinit var btnSettings: ImageButton
+    private lateinit var bottomNavigation: BottomNavigationView
+    private lateinit var emptyAppsContainer: LinearLayout
+    private lateinit var rvBlockedApps: RecyclerView
 
-    private lateinit var stateManager: ClearSpaceStateManager
-
-    private var selectedTargetPackage: String? = null
-    private var selectedTargetName: String? = null
-
-    companion object {
-        private const val REQUEST_PICK_APP = 2001
-    }
+    // Data
+    private val blockedApps = mutableListOf<BlockedApp>()
+    private var currentSessionMinutes = 30
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        stateManager = ClearSpaceStateManager(this)
-
-        switchTarget = findViewById(R.id.switch_target_app)
-        tvSessionLimit = findViewById(R.id.tv_session_limit)
-        tvSelectedApp = findViewById(R.id.tv_selected_app)
-        tvMonitoringStatus = findViewById(R.id.tv_monitoring_status)
-        btnChooseApp = findViewById(R.id.btn_choose_app)
-        btnSave = findViewById(R.id.btn_save)
-        btnSetup = findViewById(R.id.btn_setup)
-        btnDashboard = findViewById(R.id.btn_dashboard)
-        seekbarSession = findViewById(R.id.seekbar_session)
-
-        restoreSavedState()
-
-        switchTarget.setOnCheckedChangeListener { _, isChecked ->
-            updateUIState(isChecked)
-        }
-
-        seekbarSession.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                val displayTime = progress.coerceAtLeast(1)
-                tvSessionLimit.text = "Session Limit: $displayTime min"
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-        })
-
-        btnChooseApp.setOnClickListener {
-            val intent = Intent(this, AppPickerActivity::class.java)
-            startActivityForResult(intent, REQUEST_PICK_APP)
-        }
-
-        btnSetup.setOnClickListener {
-            startActivity(Intent(this, SetupActivity::class.java))
-        }
-
-        btnDashboard.setOnClickListener {
-            startActivity(Intent(this, DashboardActivity::class.java))
-        }
-
-        btnSave.setOnClickListener {
-            val monitoringEnabled = switchTarget.isChecked
-            val selectedTime = seekbarSession.progress.coerceAtLeast(1)
-
-            if (!monitoringEnabled) {
-                stopMonitoringFlow()
-                return@setOnClickListener
-            }
-
-            if (selectedTargetPackage.isNullOrBlank() || selectedTargetName.isNullOrBlank()) {
-                Toast.makeText(this, "Please choose an app to block.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            if (!PermissionUtils.hasUsageStatsPermission(this)) {
-                Toast.makeText(this, "Please allow Usage Access for ClearSpace.", Toast.LENGTH_LONG).show()
-                PermissionUtils.requestUsageStatsPermission(this)
-                return@setOnClickListener
-            }
-
-            if (!PermissionUtils.hasOverlayPermission(this)) {
-                Toast.makeText(this, "Please allow Display Over Other Apps for ClearSpace.", Toast.LENGTH_LONG).show()
-                PermissionUtils.requestOverlayPermission(this)
-                return@setOnClickListener
-            }
-
-            startMonitoringFlow(selectedTime)
-        }
+        initViews()
+        setupGreeting()
+        setupBlockingSwitch()
+        setupSlider()
+        setupChips()
+        setupButtons()
+        setupBottomNavigation()
     }
 
-    override fun onResume() {
-        super.onResume()
-        restoreSavedState()
+    private fun initViews() {
+        tvGreeting = findViewById(R.id.tvGreeting)
+        tvUserName = findViewById(R.id.tvUserName)
+        tvBlockingStatus = findViewById(R.id.tvBlockingStatus)
+        tvSessionTime = findViewById(R.id.tvSessionTime)
+        tvSessionDescription = findViewById(R.id.tvSessionDescription)
+        switchBlocking = findViewById(R.id.switchBlocking)
+        sliderSessionLimit = findViewById(R.id.sliderSessionLimit)
+        chipGroupTime = findViewById(R.id.chipGroupTime)
+        btnAddApp = findViewById(R.id.btnAddApp)
+        btnSaveSettings = findViewById(R.id.btnSaveSettings)
+        btnNotification = findViewById(R.id.btnNotification)
+        btnSettings = findViewById(R.id.btnSettings)
+        bottomNavigation = findViewById(R.id.bottomNavigation)
+        emptyAppsContainer = findViewById(R.id.emptyAppsContainer)
+        rvBlockedApps = findViewById(R.id.rvBlockedApps)
+
+        // Setup RecyclerView
+        rvBlockedApps.layoutManager = LinearLayoutManager(this)
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+    private fun setupGreeting() {
+        val calendar = Calendar.getInstance()
+        val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY)
 
-        if (requestCode == REQUEST_PICK_APP && resultCode == Activity.RESULT_OK) {
-            val appName = data?.getStringExtra(AppPickerActivity.EXTRA_APP_NAME)
-            val packageName = data?.getStringExtra(AppPickerActivity.EXTRA_APP_PACKAGE)
+        val greeting = when {
+            hourOfDay < 12 -> "Good morning"
+            hourOfDay < 17 -> "Good afternoon"
+            else -> "Good evening"
+        }
 
-            if (!appName.isNullOrBlank() && !packageName.isNullOrBlank()) {
-                selectedTargetName = appName
-                selectedTargetPackage = packageName
+        tvGreeting.text = greeting
+        // Username can be fetched from SharedPreferences or user session
+        tvUserName.text = "Alex"
+    }
 
-                // IMPORTANT FIX:
-                // Save immediately so onResume() won't restore an old app like Instagram.
-                stateManager.saveTargetApp(appName, packageName)
-
-                refreshSelectedAppUI()
-
-                Toast.makeText(this, "$appName selected", Toast.LENGTH_SHORT).show()
+    private fun setupBlockingSwitch() {
+        switchBlocking.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                tvBlockingStatus.text = "Active & Protected"
+            } else {
+                tvBlockingStatus.text = "Inactive"
             }
         }
     }
 
-    private fun restoreSavedState() {
-        val isEnabled = stateManager.isMonitoringEnabled()
-        val savedTimeLimit = stateManager.getTimeLimitMinutes().coerceAtLeast(1)
-        val savedTargetPackage = stateManager.getTargetAppPackage()
-        val savedTargetName = stateManager.getTargetAppName()
-
-        selectedTargetPackage = savedTargetPackage
-        selectedTargetName = savedTargetName
-
-        switchTarget.isChecked = isEnabled
-        seekbarSession.progress = savedTimeLimit
-        tvSessionLimit.text = "Session Limit: $savedTimeLimit min"
-
-        refreshSelectedAppUI()
-        updateUIState(isEnabled)
+    private fun setupSlider() {
+        sliderSessionLimit.addOnChangeListener { _, value, fromUser ->
+            if (fromUser) {
+                currentSessionMinutes = value.toInt()
+                updateSessionTimeDisplay()
+                updateChipSelection()
+            }
+        }
     }
 
-    private fun refreshSelectedAppUI() {
-        val appName = if (selectedTargetName.isNullOrBlank()) "None" else selectedTargetName
-        tvSelectedApp.text = "Selected App: $appName"
-        btnChooseApp.text = if (selectedTargetName.isNullOrBlank()) "Choose App" else "Change App"
+    private fun setupChips() {
+        val chip15min: Chip = findViewById(R.id.chip15min)
+        val chip30min: Chip = findViewById(R.id.chip30min)
+        val chip1hour: Chip = findViewById(R.id.chip1hour)
+        val chip2hours: Chip = findViewById(R.id.chip2hours)
+        val chip5hours: Chip = findViewById(R.id.chip5hours)
+
+        chip15min.setOnClickListener { setSessionTime(15) }
+        chip30min.setOnClickListener { setSessionTime(30) }
+        chip1hour.setOnClickListener { setSessionTime(60) }
+        chip2hours.setOnClickListener { setSessionTime(120) }
+        chip5hours.setOnClickListener { setSessionTime(300) }
+
+        chipGroupTime.setOnCheckedStateChangeListener { _, checkedIds ->
+            if (checkedIds.isNotEmpty()) {
+                val chipId = checkedIds[0]
+                val minutes = when (chipId) {
+                    R.id.chip15min -> 15
+                    R.id.chip30min -> 30
+                    R.id.chip1hour -> 60
+                    R.id.chip2hours -> 120
+                    R.id.chip5hours -> 300
+                    else -> 30
+                }
+                setSessionTime(minutes)
+            }
+        }
     }
 
-    private fun updateUIState(isEnabled: Boolean) {
-        seekbarSession.isEnabled = isEnabled
-        tvSessionLimit.alpha = if (isEnabled) 1.0f else 0.45f
-        tvMonitoringStatus.text = if (isEnabled) "Monitoring Status: ON" else "Monitoring Status: OFF"
-        tvMonitoringStatus.alpha = if (isEnabled) 1.0f else 0.7f
+    private fun setSessionTime(minutes: Int) {
+        currentSessionMinutes = minutes
+        sliderSessionLimit.value = minutes.toFloat().coerceIn(5f, 600f)
+        updateSessionTimeDisplay()
     }
 
-    private fun startMonitoringFlow(selectedTime: Int) {
-        val appName = selectedTargetName ?: return
-        val packageName = selectedTargetPackage ?: return
+    private fun updateSessionTimeDisplay() {
+        tvSessionTime.text = formatTime(currentSessionMinutes)
+        tvSessionDescription.text = getSessionDescription(currentSessionMinutes)
+    }
 
-        stateManager.saveTargetApp(appName, packageName)
-        stateManager.saveMonitoringSettings(true, selectedTime)
-        stateManager.resetLockState()
+    private fun formatTime(minutes: Int): String {
+        return when {
+            minutes < 60 -> "$minutes min"
+            minutes == 60 -> "1 hour"
+            minutes % 60 == 0 -> "${minutes / 60} hours"
+            else -> "${minutes / 60}h ${minutes % 60}m"
+        }
+    }
 
-        stopService(Intent(this, OverlayService::class.java))
+    private fun getSessionDescription(minutes: Int): String {
+        return when {
+            minutes <= 15 -> "Quick focus"
+            minutes <= 30 -> "Balanced focus"
+            minutes <= 60 -> "Deep work"
+            minutes <= 120 -> "Extended focus"
+            else -> "Marathon session"
+        }
+    }
 
-        val monitorIntent = Intent(this, AppMonitorService::class.java).apply {
-            action = AppMonitorService.ACTION_START_MONITORING
+    private fun updateChipSelection() {
+        val chipId = when (currentSessionMinutes) {
+            15 -> R.id.chip15min
+            30 -> R.id.chip30min
+            60 -> R.id.chip1hour
+            120 -> R.id.chip2hours
+            300 -> R.id.chip5hours
+            else -> -1
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(monitorIntent)
+        if (chipId != -1) {
+            chipGroupTime.check(chipId)
         } else {
-            startService(monitorIntent)
+            chipGroupTime.clearCheck()
+        }
+    }
+
+    private fun setupButtons() {
+        btnAddApp.setOnClickListener {
+            // Show app picker dialog
+            showAppPickerDialog()
         }
 
-        updateUIState(true)
+        btnSaveSettings.setOnClickListener {
+            saveSettings()
+        }
 
+        btnNotification.setOnClickListener {
+            // Handle notification click
+            Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
+        }
+
+        btnSettings.setOnClickListener {
+            // Handle settings click
+            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        bottomNavigation.selectedItemId = R.id.nav_home
+
+        bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    // Already on home
+                    true
+                }
+                R.id.nav_dashboard -> {
+                    // Navigate to Dashboard
+                    Toast.makeText(this, "Dashboard", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                R.id.nav_focus -> {
+                    // Navigate to Focus
+                    Toast.makeText(this, "Focus", Toast.LENGTH_SHORT).show()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun showAppPickerDialog() {
+        // TODO: Implement app picker dialog
+        // This would show a list of installed apps for the user to select
+        Toast.makeText(this, "Select apps to block", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun saveSettings() {
+        // Save settings to SharedPreferences or database
+        val isBlocking = switchBlocking.isChecked
+        val sessionLimit = currentSessionMinutes
+
+        // TODO: Save to persistent storage
         Toast.makeText(
             this,
-            "Monitoring started for $appName. Limit: $selectedTime min",
+            "Settings saved! Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
             Toast.LENGTH_SHORT
         ).show()
     }
 
-    private fun stopMonitoringFlow() {
-        stateManager.saveMonitoringSettings(false, seekbarSession.progress.coerceAtLeast(1))
-        stateManager.resetLockState()
-
-        stopService(Intent(this, OverlayService::class.java))
-
-        val monitorIntent = Intent(this, AppMonitorService::class.java).apply {
-            action = AppMonitorService.ACTION_STOP_MONITORING
+    private fun updateBlockedAppsVisibility() {
+        if (blockedApps.isEmpty()) {
+            emptyAppsContainer.visibility = android.view.View.VISIBLE
+            rvBlockedApps.visibility = android.view.View.GONE
+        } else {
+            emptyAppsContainer.visibility = android.view.View.GONE
+            rvBlockedApps.visibility = android.view.View.VISIBLE
         }
-        startService(monitorIntent)
-
-        updateUIState(false)
-
-        Toast.makeText(this, "Monitoring is OFF", Toast.LENGTH_SHORT).show()
     }
+
+    // Data class for blocked apps
+    data class BlockedApp(
+        val packageName: String,
+        val appName: String,
+        val appIcon: android.graphics.drawable.Drawable?
+    )
 }

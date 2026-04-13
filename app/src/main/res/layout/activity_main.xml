@@ -1,209 +1,395 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:background="@color/appBg">
+    android:background="@color/appBg"
+    tools:context=".MainActivity">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ClearSpace"
-            android:textColor="@color/b900"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="24dp"
-            android:textColor="@color/textSecondary"
-            android:textSize="14sp"
-            android:fontFamily="sans-serif" />
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNavigation">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="18dp"
-            android:background="@drawable/bg_edit_text"
-            android:layout_marginBottom="18dp">
+            android:padding="20dp">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Current Status"
-                android:textColor="@color/b800"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
-            <TextView
-                android:id="@+id/tv_monitoring_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="Monitoring Status: OFF"
-                android:textColor="@color/sageDark"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
-            <TextView
-                android:id="@+id/tv_selected_app"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Selected App: None"
-                android:textColor="@color/textSecondary"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="14dp">
-
-            <Button
-                android:id="@+id/btn_choose_app"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="@color/b800"
-                android:text="Choose App"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
-            <Button
-                android:id="@+id/btn_setup"
-                android:layout_width="0dp"
-                android:layout_height="52dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="@color/sage"
-                android:text="Setup"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-        </LinearLayout>
-
-        <Button
-            android:id="@+id/btn_dashboard"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginBottom="20dp"
-            android:backgroundTint="@color/surface"
-            android:text="Open Dashboard"
-            android:textAllCaps="false"
-            android:textColor="@color/b800"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="18dp"
-            android:background="@drawable/bg_edit_text"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="20dp">
-
+            <!-- Header Section -->
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Enable Blocking"
-                    android:textColor="@color/b800"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:fontFamily="sans-serif-medium" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Turn monitoring on for the selected app."
-                    android:textColor="@color/textSecondary"
-                    android:textSize="13sp"
-                    android:fontFamily="sans-serif" />
-            </LinearLayout>
-
-            <Switch
-                android:id="@+id/switch_target_app"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minWidth="48dp"
-                android:minHeight="48dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="18dp"
-            android:background="@drawable/bg_edit_text"
-            android:layout_marginBottom="24dp">
-
-            <TextView
-                android:id="@+id/tv_session_limit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Session Limit: 10 min"
-                android:textColor="@color/b800"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="12dp"
-                android:text="Choose how long the app can be used before ClearSpace locks it."
-                android:textColor="@color/textSecondary"
-                android:textSize="13sp"
-                android:fontFamily="sans-serif" />
-
-            <SeekBar
-                android:id="@+id/seekbar_session"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:max="300"
-                android:progress="10"
-                android:progressTint="@color/sageDark"
-                android:thumbTint="@color/b800" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Good morning"
+                        android:textColor="@color/mutedDark"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/tvUserName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Alex"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnNotification"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:background="@drawable/bg_circle_button"
+                    android:src="@drawable/ic_notification"
+                    android:contentDescription="Notifications"
+                    android:scaleType="center" />
+
+                <ImageButton
+                    android:id="@+id/btnSettings"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_circle_button"
+                    android:src="@drawable/ic_settings"
+                    android:contentDescription="Settings"
+                    android:scaleType="center" />
+
+            </LinearLayout>
+
+            <!-- Blocking Status Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardBackgroundColor="@color/b500"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="20dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Blocking Status"
+                            android:textColor="@color/white"
+                            android:textSize="12sp"
+                            android:alpha="0.8" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="4dp">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_shield"
+                                android:contentDescription="Shield icon" />
+
+                            <TextView
+                                android:id="@+id/tvBlockingStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="Active &amp; Protected"
+                                android:textColor="@color/white"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchBlocking"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:thumb="@drawable/switch_thumb"
+                        app:track="@drawable/switch_track" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Apps to Block Section -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="APPS TO BLOCK"
+                android:textColor="@color/mutedDark"
+                android:textSize="12sp"
+                android:letterSpacing="0.1" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/cardWhite"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Empty State -->
+                    <LinearLayout
+                        android:id="@+id/emptyAppsContainer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:padding="16dp"
+                        android:background="@drawable/bg_dashed_border">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="No apps selected yet. Add apps below."
+                            android:textColor="@color/muted"
+                            android:textSize="14sp" />
+
+                    </LinearLayout>
+
+                    <!-- Apps RecyclerView (hidden by default) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvBlockedApps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        tools:listitem="@layout/item_blocked_app" />
+
+                    <!-- Add App Button -->
+                    <Button
+                        android:id="@+id/btnAddApp"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_outlined_button"
+                        android:text="+ Add App to Block"
+                        android:textColor="@color/b600"
+                        android:textSize="14sp"
+                        android:textAllCaps="false" />
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Session Limit Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/cardWhite"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <!-- Session Limit Header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="SESSION LIMIT"
+                                android:textColor="@color/mutedDark"
+                                android:textSize="12sp"
+                                android:letterSpacing="0.1" />
+
+                            <TextView
+                                android:id="@+id/tvSessionDescription"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Balanced focus"
+                                android:textColor="@color/muted"
+                                android:textSize="14sp" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvSessionTime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_time_badge"
+                            android:paddingHorizontal="16dp"
+                            android:paddingVertical="10dp"
+                            android:text="30 min"
+                            android:textColor="@color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <!-- Slider -->
+                    <com.google.android.material.slider.Slider
+                        android:id="@+id/sliderSessionLimit"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:contentDescription="Session time limit slider"
+                        android:valueFrom="5"
+                        android:valueTo="600"
+                        android:value="30"
+                        android:stepSize="5"
+                        app:thumbColor="@color/b600"
+                        app:trackColorActive="@color/b600"
+                        app:trackColorInactive="@color/muted2"
+                        app:haloColor="@color/b200" />
+
+                    <!-- Slider Labels -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="5 min"
+                            android:textColor="@color/muted"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="10 hours"
+                            android:textColor="@color/muted"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <!-- Time Chips -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chipGroupTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        app:singleSelection="true"
+                        app:chipSpacingHorizontal="8dp">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip15min"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="15 min" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip30min"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="30 min"
+                            android:checked="true" />
+
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip1hour"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1 hour" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip2hours"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="2 hours" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip5hours"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="5 hours" />
+
+                    </com.google.android.material.chip.ChipGroup>
+
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Save Button -->
+            <Button
+                android:id="@+id/btnSaveSettings"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/bg_button_primary"
+                android:text="Save Settings"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAllCaps="false" />
+
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:backgroundTint="@color/b800"
-            android:text="Save Settings"
-            android:textAllCaps="false"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-medium" />
+    </ScrollView>
 
-    </LinearLayout>
-</ScrollView>
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/cardWhite"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav_menu"
+        app:labelVisibilityMode="labeled"
+        app:itemIconTint="@color/bottom_nav_color"
+        app:itemTextColor="@color/bottom_nav_color"
+        app:itemActiveIndicatorStyle="@style/BottomNavIndicator" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
