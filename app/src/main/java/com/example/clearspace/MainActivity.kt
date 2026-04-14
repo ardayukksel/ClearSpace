@@ -6,6 +6,7 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -215,13 +216,11 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_dashboard -> {
-                    // Navigate to Dashboard
-                    Toast.makeText(this, "Dashboard", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, DashboardActivity::class.java))
                     true
                 }
                 R.id.nav_focus -> {
-                    // Navigate to Focus
-                    Toast.makeText(this, "Focus", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, ChallengeActivity::class.java))
                     true
                 }
                 else -> false
