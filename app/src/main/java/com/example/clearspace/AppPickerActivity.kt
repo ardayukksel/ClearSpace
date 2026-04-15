@@ -2,7 +2,6 @@ package com.example.clearspace
 
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -14,6 +13,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import java.text.Collator
+import java.util.Locale
 
 class AppPickerActivity : AppCompatActivity() {
 
@@ -29,31 +30,63 @@ class AppPickerActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.rv_apps)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        val pm = packageManager
-        val apps = pm.getInstalledApplications(PackageManager.GET_META_DATA)
-            .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 } // Filter out system apps for simplicity
-            .map { appInfo ->
-                AppInfo(
-                    name = appInfo.loadLabel(pm).toString(),
-                    packageName = appInfo.packageName,
-                    icon = appInfo.loadIcon(pm)
-                )
-            }
-            .sortedBy { it.name }
-
+        val apps = loadLaunchableApps()
         recyclerView.adapter = AppAdapter(apps) { selectedApp ->
-            val resultIntent = Intent()
-            resultIntent.putExtra(EXTRA_APP_NAME, selectedApp.name)
-            resultIntent.putExtra(EXTRA_APP_PACKAGE, selectedApp.packageName)
+            val resultIntent = Intent().apply {
+                putExtra(EXTRA_APP_NAME, selectedApp.name)
+                putExtra(EXTRA_APP_PACKAGE, selectedApp.packageName)
+            }
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
         }
     }
 
-    data class AppInfo(val name: String, val packageName: String, val icon: Drawable)
+    private fun loadLaunchableApps(): List<AppInfo> {
+        val pm = packageManager
 
-    class AppAdapter(private val apps: List<AppInfo>, private val onClick: (AppInfo) -> Unit) :
-        RecyclerView.Adapter<AppAdapter.ViewHolder>() {
+        val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+
+        val collator = Collator.getInstance(Locale.getDefault())
+
+        return pm.queryIntentActivities(mainIntent, PackageManager.MATCH_ALL)
+            .mapNotNull { resolveInfo ->
+                val activityInfo = resolveInfo.activityInfo ?: return@mapNotNull null
+                val packageName = activityInfo.packageName
+
+                // Exclude ClearSpace itself
+                if (packageName == packageName()) return@mapNotNull null
+
+                val appName = resolveInfo.loadLabel(pm)?.toString()?.trim().orEmpty()
+                val icon = resolveInfo.loadIcon(pm)
+
+                if (appName.isBlank()) return@mapNotNull null
+
+                AppInfo(
+                    name = appName,
+                    packageName = packageName,
+                    icon = icon
+                )
+            }
+            .distinctBy { it.packageName }
+            .sortedWith { a, b -> collator.compare(a.name, b.name) }
+    }
+
+    private fun packageName(): String {
+        return applicationContext.packageName
+    }
+
+    data class AppInfo(
+        val name: String,
+        val packageName: String,
+        val icon: Drawable
+    )
+
+    class AppAdapter(
+        private val apps: List<AppInfo>,
+        private val onClick: (AppInfo) -> Unit
+    ) : RecyclerView.Adapter<AppAdapter.ViewHolder>() {
 
         class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
             val icon: ImageView = view.findViewById(R.id.iv_app_icon)
@@ -61,7 +94,8 @@ class AppPickerActivity : AppCompatActivity() {
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_app, parent, false)
+            val view = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_app, parent, false)
             return ViewHolder(view)
         }
 
@@ -72,6 +106,6 @@ class AppPickerActivity : AppCompatActivity() {
             holder.itemView.setOnClickListener { onClick(app) }
         }
 
-        override fun getItemCount() = apps.size
+        override fun getItemCount(): Int = apps.size
     }
 }
