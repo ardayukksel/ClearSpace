@@ -135,10 +135,10 @@ class MainActivity : AppCompatActivity() {
         selectedAppName = stateManager.getTargetAppName()
         selectedAppPackage = stateManager.getTargetAppPackage()
 
-        currentSessionMinutes = stateManager.getTimeLimitMinutes()
+        currentSessionMinutes = stateManager.getTimeLimitMinutes().coerceAtLeast(1)
         switchBlocking.isChecked = stateManager.isMonitoringEnabled()
 
-        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(5f, 600f)
+        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(1f, 600f)
         updateSessionTimeDisplay()
         updateChipSelection()
 
@@ -185,9 +185,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSlider() {
+        sliderSessionLimit.valueFrom = 1f
+        sliderSessionLimit.valueTo = 600f
+        sliderSessionLimit.stepSize = 1f
+
         sliderSessionLimit.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {
-                currentSessionMinutes = value.toInt()
+                currentSessionMinutes = value.toInt().coerceAtLeast(1)
                 updateSessionTimeDisplay()
                 updateChipSelection()
             }
@@ -227,8 +231,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setSessionTime(minutes: Int) {
-        currentSessionMinutes = minutes
-        sliderSessionLimit.value = minutes.toFloat().coerceIn(5f, 600f)
+        currentSessionMinutes = minutes.coerceAtLeast(1)
+        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(1f, 600f)
         updateSessionTimeDisplay()
     }
 
@@ -248,6 +252,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun getSessionDescription(minutes: Int): String {
         return when {
+            minutes <= 5 -> "Quick focus"
             minutes <= 15 -> "Quick focus"
             minutes <= 30 -> "Balanced focus"
             minutes <= 60 -> "Deep work"
@@ -328,7 +333,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val isBlocking = switchBlocking.isChecked
-        val sessionLimit = currentSessionMinutes
+        val sessionLimit = currentSessionMinutes.coerceAtLeast(1)
 
         stateManager.saveMonitoringSettings(isBlocking, sessionLimit)
 
