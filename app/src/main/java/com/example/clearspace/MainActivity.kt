@@ -309,7 +309,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.nav_focus -> {
-                    startActivity(Intent(this, ChallengeActivity::class.java))
+                    val intent = Intent(this, ChallengeActivity::class.java).apply {
+                        putExtra(ChallengeActivity.EXTRA_MODE, ChallengeActivity.MODE_MANUAL)
+                    }
+                    startActivity(intent)
                     true
                 }
 

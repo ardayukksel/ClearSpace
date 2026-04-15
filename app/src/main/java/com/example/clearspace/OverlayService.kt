@@ -98,6 +98,7 @@ class OverlayService : Service() {
             removeOverlayImmediately()
 
             val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
+                putExtra(ChallengeActivity.EXTRA_MODE, ChallengeActivity.MODE_LOCKED)
                 addFlags(
                     Intent.FLAG_ACTIVITY_NEW_TASK or
                             Intent.FLAG_ACTIVITY_SINGLE_TOP or

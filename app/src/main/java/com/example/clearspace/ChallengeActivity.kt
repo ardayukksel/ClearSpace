@@ -16,6 +16,10 @@ class ChallengeActivity : AppCompatActivity() {
 
     companion object {
         var isVisible: Boolean = false
+
+        const val EXTRA_MODE = "extra_mode"
+        const val MODE_LOCKED = "locked"
+        const val MODE_MANUAL = "manual"
     }
 
     private enum class BreathPhase(
@@ -40,6 +44,8 @@ class ChallengeActivity : AppCompatActivity() {
     private lateinit var tvProgress: TextView
     private lateinit var btnUnlock: Button
 
+    private var challengeMode: String = MODE_LOCKED
+
     private val phaseSequence = listOf(
         BreathPhase.INHALE,
         BreathPhase.HOLD,
@@ -57,15 +63,13 @@ class ChallengeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_challenge)
 
         stateManager = ClearSpaceStateManager(this)
+        challengeMode = intent.getStringExtra(EXTRA_MODE) ?: MODE_LOCKED
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 // Blocked intentionally while challenge is active
             }
         })
-
-        stateManager.setChallengeActive(true)
-        stopService(Intent(this, OverlayService::class.java))
 
         tvChallengeTitle = findViewById(R.id.tv_challenge_title)
         tvChallengeSubtitle = findViewById(R.id.tv_challenge_subtitle)
@@ -77,16 +81,28 @@ class ChallengeActivity : AppCompatActivity() {
         btnUnlock.visibility = View.GONE
         btnUnlock.isEnabled = false
 
+        if (challengeMode == MODE_LOCKED) {
+            stateManager.setChallengeActive(true)
+            stopService(Intent(this, OverlayService::class.java))
+        } else {
+            stateManager.setChallengeActive(false)
+        }
+
         startBreathingChallenge()
 
         btnUnlock.setOnClickListener {
-            unlockAndReturnToTargetApp()
+            if (challengeMode == MODE_MANUAL) {
+                finishManualFocus()
+            } else {
+                unlockAndReturnToTargetApp()
+            }
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        challengeMode = intent.getStringExtra(EXTRA_MODE) ?: MODE_LOCKED
         overridePendingTransition(0, 0)
         relaunchHandler.removeCallbacksAndMessages(null)
         isRelaunchScheduled = false
@@ -97,21 +113,34 @@ class ChallengeActivity : AppCompatActivity() {
         isVisible = true
         isRelaunchScheduled = false
         overridePendingTransition(0, 0)
-        stopService(Intent(this, OverlayService::class.java))
+
+        if (challengeMode == MODE_LOCKED) {
+            stopService(Intent(this, OverlayService::class.java))
+        }
     }
 
     override fun onStop() {
         super.onStop()
         isVisible = false
-        enforceChallengeIfNeeded()
+
+        if (challengeMode == MODE_LOCKED) {
+            enforceChallengeIfNeeded()
+        }
     }
 
     private fun startBreathingChallenge() {
         currentPhaseIndex = 0
         btnUnlock.visibility = View.GONE
         btnUnlock.isEnabled = false
-        tvChallengeTitle.text = "Pause & Reflect"
-        tvChallengeSubtitle.text = "Complete the breathing exercise before you continue."
+
+        if (challengeMode == MODE_MANUAL) {
+            tvChallengeTitle.text = "Focus Reset"
+            tvChallengeSubtitle.text = "Take a short breathing break, then return when you're ready."
+        } else {
+            tvChallengeTitle.text = "Pause & Reflect"
+            tvChallengeSubtitle.text = "Complete the breathing exercise before you continue."
+        }
+
         runCurrentPhase()
     }
 
@@ -146,7 +175,15 @@ class ChallengeActivity : AppCompatActivity() {
         tvPhase.text = "Ready"
         tvTimer.text = "✓"
         tvProgress.text = "Challenge complete"
-        tvChallengeSubtitle.text = "Nice. You can return to your app now."
+
+        if (challengeMode == MODE_MANUAL) {
+            tvChallengeSubtitle.text = "Nice. Return to ClearSpace when you're ready."
+            btnUnlock.text = "Back to ClearSpace"
+        } else {
+            tvChallengeSubtitle.text = "Nice. You can return to your app now."
+            btnUnlock.text = "Unlock App"
+        }
+
         btnUnlock.visibility = View.VISIBLE
         btnUnlock.isEnabled = true
     }
@@ -171,7 +208,8 @@ class ChallengeActivity : AppCompatActivity() {
                     return@postDelayed
                 }
 
-                val intent = Intent(this, ChallengeActivity::class.java).apply {
+                val challengeIntent = Intent(this, ChallengeActivity::class.java).apply {
+                    putExtra(EXTRA_MODE, MODE_LOCKED)
                     addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
@@ -179,10 +217,18 @@ class ChallengeActivity : AppCompatActivity() {
                                 Intent.FLAG_ACTIVITY_NO_ANIMATION
                     )
                 }
-                startActivity(intent)
+                startActivity(challengeIntent)
                 overridePendingTransition(0, 0)
             }, 100)
         }
+    }
+
+    private fun finishManualFocus() {
+        isUnlocking = true
+        btnUnlock.isEnabled = false
+        stateManager.setChallengeActive(false)
+        finish()
+        overridePendingTransition(0, 0)
     }
 
     private fun unlockAndReturnToTargetApp() {
