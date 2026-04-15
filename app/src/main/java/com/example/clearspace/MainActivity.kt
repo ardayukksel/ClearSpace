@@ -1,12 +1,16 @@
 package com.example.clearspace
 
+import android.content.Intent
+import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -36,21 +40,54 @@ class MainActivity : AppCompatActivity() {
     private lateinit var emptyAppsContainer: LinearLayout
     private lateinit var rvBlockedApps: RecyclerView
 
+    // State
+    private lateinit var stateManager: ClearSpaceStateManager
+    private var currentSessionMinutes = 30
+
+    private var selectedAppName: String = ""
+    private var selectedAppPackage: String = ""
+
     // Data
     private val blockedApps = mutableListOf<BlockedApp>()
-    private var currentSessionMinutes = 30
+    private lateinit var blockedAppsAdapter: BlockedAppAdapter
+
+    private val appPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                val data = result.data
+                val appName = data?.getStringExtra(AppPickerActivity.EXTRA_APP_NAME).orEmpty()
+                val appPackage = data?.getStringExtra(AppPickerActivity.EXTRA_APP_PACKAGE).orEmpty()
+
+                if (appName.isNotBlank() && appPackage.isNotBlank()) {
+                    selectedAppName = appName
+                    selectedAppPackage = appPackage
+
+                    stateManager.saveTargetApp(appName, appPackage)
+                    loadSelectedAppIntoList()
+
+                    Toast.makeText(this, "$appName selected", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "No app selected", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        stateManager = ClearSpaceStateManager(this)
+
         initViews()
+        setupRecyclerView()
         setupGreeting()
+        loadSavedState()
         setupBlockingSwitch()
         setupSlider()
         setupChips()
         setupButtons()
         setupBottomNavigation()
+        updateBlockedAppsVisibility()
     }
 
     private fun initViews() {
@@ -69,9 +106,12 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation = findViewById(R.id.bottomNavigation)
         emptyAppsContainer = findViewById(R.id.emptyAppsContainer)
         rvBlockedApps = findViewById(R.id.rvBlockedApps)
+    }
 
-        // Setup RecyclerView
+    private fun setupRecyclerView() {
+        blockedAppsAdapter = BlockedAppAdapter(blockedApps)
         rvBlockedApps.layoutManager = LinearLayoutManager(this)
+        rvBlockedApps.adapter = blockedAppsAdapter
     }
 
     private fun setupGreeting() {
@@ -85,16 +125,61 @@ class MainActivity : AppCompatActivity() {
         }
 
         tvGreeting.text = greeting
-        // Username can be fetched from SharedPreferences or user session
-        tvUserName.text = "Alex"
+
+        val sessionPrefs = getSharedPreferences("ClearSpaceSession", MODE_PRIVATE)
+        val savedUserName = sessionPrefs.getString("userName", "Alex") ?: "Alex"
+        tvUserName.text = savedUserName
+    }
+
+    private fun loadSavedState() {
+        selectedAppName = stateManager.getTargetAppName()
+        selectedAppPackage = stateManager.getTargetAppPackage()
+
+        currentSessionMinutes = stateManager.getTimeLimitMinutes()
+        switchBlocking.isChecked = stateManager.isMonitoringEnabled()
+
+        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(5f, 600f)
+        updateSessionTimeDisplay()
+        updateChipSelection()
+
+        tvBlockingStatus.text = if (switchBlocking.isChecked) {
+            "Active & Protected"
+        } else {
+            "Inactive"
+        }
+
+        loadSelectedAppIntoList()
+    }
+
+    private fun loadSelectedAppIntoList() {
+        blockedApps.clear()
+
+        if (selectedAppName.isNotBlank() && selectedAppPackage.isNotBlank()) {
+            val icon = try {
+                packageManager.getApplicationIcon(selectedAppPackage)
+            } catch (_: Exception) {
+                null
+            }
+
+            blockedApps.add(
+                BlockedApp(
+                    packageName = selectedAppPackage,
+                    appName = selectedAppName,
+                    appIcon = icon
+                )
+            )
+        }
+
+        blockedAppsAdapter.notifyDataSetChanged()
+        updateBlockedAppsVisibility()
     }
 
     private fun setupBlockingSwitch() {
         switchBlocking.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                tvBlockingStatus.text = "Active & Protected"
+            tvBlockingStatus.text = if (isChecked) {
+                "Active & Protected"
             } else {
-                tvBlockingStatus.text = "Inactive"
+                "Inactive"
             }
         }
     }
@@ -133,7 +218,10 @@ class MainActivity : AppCompatActivity() {
                     R.id.chip5hours -> 300
                     else -> 30
                 }
-                setSessionTime(minutes)
+
+                if (currentSessionMinutes != minutes) {
+                    setSessionTime(minutes)
+                }
             }
         }
     }
@@ -187,8 +275,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupButtons() {
         btnAddApp.setOnClickListener {
-            // Show app picker dialog
-            showAppPickerDialog()
+            openAppPicker()
         }
 
         btnSaveSettings.setOnClickListener {
@@ -196,14 +283,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnNotification.setOnClickListener {
-            // Handle notification click
             Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
         }
 
         btnSettings.setOnClickListener {
-            // Handle settings click
             Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun openAppPicker() {
+        val intent = Intent(this, AppPickerActivity::class.java)
+        appPickerLauncher.launch(intent)
     }
 
     private fun setupBottomNavigation() {
@@ -211,56 +301,93 @@ class MainActivity : AppCompatActivity() {
 
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> {
-                    // Already on home
-                    true
-                }
+                R.id.nav_home -> true
+
                 R.id.nav_dashboard -> {
                     startActivity(Intent(this, DashboardActivity::class.java))
                     true
                 }
+
                 R.id.nav_focus -> {
                     startActivity(Intent(this, ChallengeActivity::class.java))
                     true
                 }
+
                 else -> false
             }
         }
     }
 
-    private fun showAppPickerDialog() {
-        // TODO: Implement app picker dialog
-        // This would show a list of installed apps for the user to select
-        Toast.makeText(this, "Select apps to block", Toast.LENGTH_SHORT).show()
-    }
-
     private fun saveSettings() {
-        // Save settings to SharedPreferences or database
+        if (selectedAppPackage.isBlank()) {
+            Toast.makeText(this, "Please select a target app first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val isBlocking = switchBlocking.isChecked
         val sessionLimit = currentSessionMinutes
 
-        // TODO: Save to persistent storage
+        stateManager.saveMonitoringSettings(isBlocking, sessionLimit)
+
+        if (isBlocking) {
+            val startIntent = Intent(this, AppMonitorService::class.java).apply {
+                action = AppMonitorService.ACTION_START_MONITORING
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(startIntent)
+            } else {
+                startService(startIntent)
+            }
+        } else {
+            val stopIntent = Intent(this, AppMonitorService::class.java).apply {
+                action = AppMonitorService.ACTION_STOP_MONITORING
+            }
+            startService(stopIntent)
+        }
+
         Toast.makeText(
             this,
-            "Settings saved! Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
+            "Settings saved! App: $selectedAppName, Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
             Toast.LENGTH_SHORT
         ).show()
     }
 
     private fun updateBlockedAppsVisibility() {
         if (blockedApps.isEmpty()) {
-            emptyAppsContainer.visibility = android.view.View.VISIBLE
-            rvBlockedApps.visibility = android.view.View.GONE
+            emptyAppsContainer.visibility = View.VISIBLE
+            rvBlockedApps.visibility = View.GONE
         } else {
-            emptyAppsContainer.visibility = android.view.View.GONE
-            rvBlockedApps.visibility = android.view.View.VISIBLE
+            emptyAppsContainer.visibility = View.GONE
+            rvBlockedApps.visibility = View.VISIBLE
         }
     }
 
-    // Data class for blocked apps
     data class BlockedApp(
         val packageName: String,
         val appName: String,
-        val appIcon: android.graphics.drawable.Drawable?
+        val appIcon: Drawable?
     )
+
+    class BlockedAppAdapter(
+        private val items: List<BlockedApp>
+    ) : RecyclerView.Adapter<BlockedAppAdapter.BlockedAppViewHolder>() {
+
+        class BlockedAppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+            val textView: TextView = view.findViewById(android.R.id.text1)
+        }
+
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): BlockedAppViewHolder {
+            val view = android.view.LayoutInflater.from(parent.context)
+                .inflate(android.R.layout.simple_list_item_1, parent, false)
+            return BlockedAppViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: BlockedAppViewHolder, position: Int) {
+            val item = items[position]
+            holder.textView.text = item.appName
+        }
+
+        override fun getItemCount(): Int = items.size
+    }
 }
