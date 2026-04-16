@@ -60,7 +60,6 @@ class ChallengeActivity : AppCompatActivity() {
     private var challengeMode: String = MODE_LOCKED
     private var currentChallengeType: ChallengeType = ChallengeType.BREATHING
 
-    // Breathing challenge
     private val phaseSequence = listOf(
         BreathPhase.INHALE,
         BreathPhase.HOLD,
@@ -71,11 +70,9 @@ class ChallengeActivity : AppCompatActivity() {
     )
     private var currentPhaseIndex = 0
 
-    // Rapid tap challenge
     private var tapTarget = 20
     private var tapCount = 0
 
-    // Hold challenge
     private var holdRequiredMs = 4000L
     private var holdStartTime = 0L
     private var isHolding = false
@@ -100,7 +97,6 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
-    // Math challenge
     private var mathAnswer = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +109,6 @@ class ChallengeActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // blocked intentionally
             }
         })
 
@@ -182,12 +177,7 @@ class ChallengeActivity : AppCompatActivity() {
         currentChallengeType = if (challengeMode == MODE_MANUAL) {
             ChallengeType.BREATHING
         } else {
-            listOf(
-                ChallengeType.BREATHING,
-                ChallengeType.RAPID_TAP,
-                ChallengeType.HOLD_STILL,
-                ChallengeType.SIMPLE_MATH
-            ).random()
+            pickChallengeFromPreferences()
         }
 
         when (currentChallengeType) {
@@ -195,6 +185,35 @@ class ChallengeActivity : AppCompatActivity() {
             ChallengeType.RAPID_TAP -> startRapidTapChallenge()
             ChallengeType.HOLD_STILL -> startHoldChallenge()
             ChallengeType.SIMPLE_MATH -> startMathChallenge()
+        }
+    }
+
+    private fun pickChallengeFromPreferences(): ChallengeType {
+        val breathingEnabled = stateManager.isBreathingChallengeEnabled()
+        val tapEnabled = stateManager.isTapChallengeEnabled()
+        val holdEnabled = stateManager.isHoldChallengeEnabled()
+        val mathEnabled = stateManager.isMathChallengeEnabled()
+        val randomEnabled = stateManager.isRandomChallengeEnabled()
+
+        val selectedChallenges = mutableListOf<ChallengeType>()
+
+        if (breathingEnabled) selectedChallenges.add(ChallengeType.BREATHING)
+        if (tapEnabled) selectedChallenges.add(ChallengeType.RAPID_TAP)
+        if (holdEnabled) selectedChallenges.add(ChallengeType.HOLD_STILL)
+        if (mathEnabled) selectedChallenges.add(ChallengeType.SIMPLE_MATH)
+
+        return when {
+            randomEnabled && selectedChallenges.isNotEmpty() -> selectedChallenges.random()
+            randomEnabled && selectedChallenges.isEmpty() -> {
+                listOf(
+                    ChallengeType.BREATHING,
+                    ChallengeType.RAPID_TAP,
+                    ChallengeType.HOLD_STILL,
+                    ChallengeType.SIMPLE_MATH
+                ).random()
+            }
+            selectedChallenges.isNotEmpty() -> selectedChallenges.random()
+            else -> ChallengeType.BREATHING
         }
     }
 
@@ -215,10 +234,6 @@ class ChallengeActivity : AppCompatActivity() {
         btnUnlock.visibility = View.GONE
         btnUnlock.isEnabled = false
     }
-
-    // --------------------------------------------------
-    // Breathing challenge
-    // --------------------------------------------------
 
     private fun startBreathingChallenge() {
         currentPhaseIndex = 0
@@ -261,20 +276,11 @@ class ChallengeActivity : AppCompatActivity() {
         }.start()
     }
 
-    // --------------------------------------------------
-    // Rapid tap challenge
-    // --------------------------------------------------
-
     private fun startRapidTapChallenge() {
         tapTarget = 20
         tapCount = 0
 
-        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
-            "Energy Reset"
-        } else {
-            "Quick Action"
-        }
-
+        tvChallengeTitle.text = "Quick Action"
         tvChallengeSubtitle.text = "Tap the button $tapTarget times to continue."
         tvPhase.text = "Tap Fast"
         tvTimer.text = tapCount.toString()
@@ -293,19 +299,10 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
-    // --------------------------------------------------
-    // Hold challenge
-    // --------------------------------------------------
-
     private fun startHoldChallenge() {
         holdRequiredMs = 4000L
 
-        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
-            "Steady Focus"
-        } else {
-            "Hold Your Focus"
-        }
-
+        tvChallengeTitle.text = "Hold Your Focus"
         tvChallengeSubtitle.text = "Press and hold the button for 4 seconds without letting go."
         tvPhase.text = "Press & Hold"
         tvTimer.text = "4"
@@ -341,24 +338,25 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
-    // --------------------------------------------------
-    // Math challenge
-    // --------------------------------------------------
-
     private fun startMathChallenge() {
-        val a = Random.nextInt(2, 10)
-        val b = Random.nextInt(2, 10)
         val useAddition = Random.nextBoolean()
+        val a: Int
+        val b: Int
+        val symbol: String
 
-        mathAnswer = if (useAddition) a + b else a - b
-        val symbol = if (useAddition) "+" else "-"
-
-        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
-            "Mental Reset"
+        if (useAddition) {
+            a = Random.nextInt(2, 10)
+            b = Random.nextInt(2, 10)
+            mathAnswer = a + b
+            symbol = "+"
         } else {
-            "Quick Check"
+            a = Random.nextInt(6, 15)
+            b = Random.nextInt(1, a)
+            mathAnswer = a - b
+            symbol = "-"
         }
 
+        tvChallengeTitle.text = "Quick Check"
         tvChallengeSubtitle.text = "Solve the math problem to continue."
         tvPhase.text = "$a $symbol $b = ?"
         tvTimer.text = "?"
@@ -391,10 +389,6 @@ class ChallengeActivity : AppCompatActivity() {
             }
         }
     }
-
-    // --------------------------------------------------
-    // Shared finish logic
-    // --------------------------------------------------
 
     private fun finishChallengeSuccess() {
         countDownTimer?.cancel()
