@@ -105,10 +105,11 @@ class ChallengeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_challenge)
 
         stateManager = ClearSpaceStateManager(this)
-        challengeMode = intent.getStringExtra(EXTRA_MODE) ?: MODE_LOCKED
+        challengeMode = resolveMode(intent)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                // blocked intentionally
             }
         })
 
@@ -121,34 +122,26 @@ class ChallengeActivity : AppCompatActivity() {
         btnAction = findViewById(R.id.btn_action)
         btnUnlock = findViewById(R.id.btn_unlock)
 
-        btnUnlock.visibility = View.GONE
-        btnUnlock.isEnabled = false
-
-        if (challengeMode == MODE_LOCKED) {
-            stateManager.setChallengeActive(true)
-            stopService(Intent(this, OverlayService::class.java))
-        } else {
-            stateManager.setChallengeActive(false)
-        }
-
+        applyModeState()
         startSelectedChallenge()
-
-        btnUnlock.setOnClickListener {
-            if (challengeMode == MODE_MANUAL) {
-                finishManualFocus()
-            } else {
-                unlockAndReturnToTargetApp()
-            }
-        }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        challengeMode = intent.getStringExtra(EXTRA_MODE) ?: MODE_LOCKED
+        challengeMode = resolveMode(intent)
         overridePendingTransition(0, 0)
+
         relaunchHandler.removeCallbacksAndMessages(null)
+        holdHandler.removeCallbacksAndMessages(null)
+        countDownTimer?.cancel()
+
         isRelaunchScheduled = false
+        isUnlocking = false
+        isHolding = false
+
+        applyModeState()
+        startSelectedChallenge()
     }
 
     override fun onResume() {
@@ -159,6 +152,8 @@ class ChallengeActivity : AppCompatActivity() {
 
         if (challengeMode == MODE_LOCKED) {
             stopService(Intent(this, OverlayService::class.java))
+        } else {
+            stateManager.setChallengeActive(false)
         }
     }
 
@@ -171,14 +166,28 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
+    private fun resolveMode(intent: Intent?): String {
+        val mode = intent?.getStringExtra(EXTRA_MODE)
+        return if (mode == MODE_MANUAL) MODE_MANUAL else MODE_LOCKED
+    }
+
+    private fun applyModeState() {
+        btnUnlock.visibility = View.GONE
+        btnUnlock.isEnabled = false
+        btnUnlock.text = ""
+        btnUnlock.setOnClickListener(null)
+
+        if (challengeMode == MODE_LOCKED) {
+            stateManager.setChallengeActive(true)
+            stopService(Intent(this, OverlayService::class.java))
+        } else {
+            stateManager.setChallengeActive(false)
+        }
+    }
+
     private fun startSelectedChallenge() {
         resetDynamicViews()
-
-        currentChallengeType = if (challengeMode == MODE_MANUAL) {
-            ChallengeType.BREATHING
-        } else {
-            pickChallengeFromPreferences()
-        }
+        currentChallengeType = pickChallengeFromPreferences()
 
         when (currentChallengeType) {
             ChallengeType.BREATHING -> startBreathingChallenge()
@@ -233,6 +242,8 @@ class ChallengeActivity : AppCompatActivity() {
 
         btnUnlock.visibility = View.GONE
         btnUnlock.isEnabled = false
+        btnUnlock.text = ""
+        btnUnlock.setOnClickListener(null)
     }
 
     private fun startBreathingChallenge() {
@@ -240,10 +251,10 @@ class ChallengeActivity : AppCompatActivity() {
 
         if (challengeMode == MODE_MANUAL) {
             tvChallengeTitle.text = "Focus Reset"
-            tvChallengeSubtitle.text = "Take a short breathing break, then return when you're ready."
+            tvChallengeSubtitle.text = "Complete your selected focus challenge, then return when you're ready."
         } else {
             tvChallengeTitle.text = "Pause & Reflect"
-            tvChallengeSubtitle.text = "Complete the breathing exercise before you continue."
+            tvChallengeSubtitle.text = "Complete the challenge before you continue."
         }
 
         runCurrentPhase()
@@ -280,7 +291,7 @@ class ChallengeActivity : AppCompatActivity() {
         tapTarget = 20
         tapCount = 0
 
-        tvChallengeTitle.text = "Quick Action"
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) "Focus Reset" else "Quick Action"
         tvChallengeSubtitle.text = "Tap the button $tapTarget times to continue."
         tvPhase.text = "Tap Fast"
         tvTimer.text = tapCount.toString()
@@ -302,7 +313,7 @@ class ChallengeActivity : AppCompatActivity() {
     private fun startHoldChallenge() {
         holdRequiredMs = 4000L
 
-        tvChallengeTitle.text = "Hold Your Focus"
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) "Focus Reset" else "Hold Your Focus"
         tvChallengeSubtitle.text = "Press and hold the button for 4 seconds without letting go."
         tvPhase.text = "Press & Hold"
         tvTimer.text = "4"
@@ -356,7 +367,7 @@ class ChallengeActivity : AppCompatActivity() {
             symbol = "-"
         }
 
-        tvChallengeTitle.text = "Quick Check"
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) "Focus Reset" else "Quick Check"
         tvChallengeSubtitle.text = "Solve the math problem to continue."
         tvPhase.text = "$a $symbol $b = ?"
         tvTimer.text = "?"
@@ -405,9 +416,15 @@ class ChallengeActivity : AppCompatActivity() {
         if (challengeMode == MODE_MANUAL) {
             tvChallengeSubtitle.text = "Nice. Return to ClearSpace when you're ready."
             btnUnlock.text = "Back to ClearSpace"
+            btnUnlock.setOnClickListener {
+                finishManualFocus()
+            }
         } else {
             tvChallengeSubtitle.text = "Nice. You can return to your app now."
             btnUnlock.text = "Unlock App"
+            btnUnlock.setOnClickListener {
+                unlockAndReturnToTargetApp()
+            }
         }
 
         btnUnlock.visibility = View.VISIBLE
