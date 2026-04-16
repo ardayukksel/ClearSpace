@@ -23,7 +23,6 @@ import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
-    // Views
     private lateinit var tvGreeting: TextView
     private lateinit var tvUserName: TextView
     private lateinit var tvBlockingStatus: TextView
@@ -40,14 +39,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var emptyAppsContainer: LinearLayout
     private lateinit var rvBlockedApps: RecyclerView
 
-    // State
     private lateinit var stateManager: ClearSpaceStateManager
     private var currentSessionMinutes = 30
 
     private var selectedAppName: String = ""
     private var selectedAppPackage: String = ""
 
-    // Data
     private val blockedApps = mutableListOf<BlockedApp>()
     private lateinit var blockedAppsAdapter: BlockedAppAdapter
 
@@ -125,10 +122,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         tvGreeting.text = greeting
-
-        val sessionPrefs = getSharedPreferences("ClearSpaceSession", MODE_PRIVATE)
-        val savedUserName = sessionPrefs.getString("userName", "Alex") ?: "Alex"
-        tvUserName.text = savedUserName
+        tvUserName.text = stateManager.getLoggedInUserName()
     }
 
     private fun loadSavedState() {

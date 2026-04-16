@@ -12,6 +12,15 @@ interface ApiService {
     @POST("sessions/start")
     suspend fun startSession(@Body request: StartSessionRequest): StartSessionResponse
 
+    @POST("sessions/end")
+    suspend fun endSession(@Body request: EndSessionRequest): EndSessionResponse
+
+    @POST("sessions/update-duration")
+    suspend fun updateSessionDuration(@Body request: UpdateSessionDurationRequest): GenericResponse
+
+    @POST("users/find-or-create")
+    suspend fun findOrCreateUser(@Body request: FindOrCreateUserRequest): FindOrCreateUserResponse
+
     @POST("user-challenges/complete")
     suspend fun completeChallenge(@Body request: CompleteChallengeRequest): GenericResponse
 }

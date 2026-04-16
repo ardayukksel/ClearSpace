@@ -1,23 +1,23 @@
 USE self_regulation_app;
 
---  Count today's breached sessions
+-- Count today's breached sessions
 SELECT COUNT(*) AS breaches_today
 FROM sessions
 WHERE user_id = 1
-	AND breached = TRUE
-    AND DATE(start_time) = CURDATE();
-  
---  Check if the user is currently locked
-SELECT user_id, name, locked_until
+  AND breached = TRUE
+  AND DATE(start_time) = CURDATE();
+
+-- Check if the user is currently locked
+SELECT user_id, user_name, locked_until
 FROM users
 WHERE user_id = 1;
 
---  Lock the user for 15 minutes
+-- Lock the user for 15 minutes
 UPDATE users
 SET locked_until = DATE_ADD(NOW(), INTERVAL 15 MINUTE)
 WHERE user_id = 1;
 
---  Unlock the user
+-- Unlock the user
 UPDATE users
 SET locked_until = NULL
 WHERE user_id = 1;
@@ -31,15 +31,42 @@ SELECT challenge_id, title, description, type
 FROM challenges
 WHERE active = TRUE;
 
--- Start a new session
-INSERT INTO sessions (user_id, regulated_app, start_time)
-VALUES (1, 'Instagram', NOW());
-
--- End a session and calculate duration
+-- End the latest open session for user 1
 UPDATE sessions
 SET end_time = NOW(),
-	duration_seconds = TIMESTAMPDIFF(SECOND, start_time, NOW())
-WHERE session_id = 1
-	AND end_time IS NULL
+    duration_seconds = TIMESTAMPDIFF(SECOND, start_time, NOW())
+WHERE user_id = 1
+  AND end_time IS NULL
 ORDER BY start_time DESC
 LIMIT 1;
+
+-- Find all users
+SELECT user_id, user_name, email, last_login_at
+FROM users
+ORDER BY last_login_at DESC;
+
+-- Update login time after success
+UPDATE users
+SET last_login_at = NOW()
+WHERE user_id = 1;
+
+-- See how many users exist
+SELECT COUNT(*) AS total_users
+FROM users;
+
+-- See the latest registered users
+SELECT user_id, user_name, email, created_at
+FROM users
+ORDER BY created_at DESC;
+
+SET SQL_SAFE_UPDATES = 0;
+
+SELECT *
+FROM users
+ORDER BY user_id DESC;
+
+DELETE FROM sessions;
+
+SELECT *
+FROM sessions
+ORDER BY session_id DESC;

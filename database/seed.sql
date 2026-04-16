@@ -3,7 +3,7 @@ USE self_regulation_app;
 -- ========================================
 -- USERS
 -- ========================================
-INSERT INTO users (name, email, session_limit_minutes, daily_limit_minutes)
+INSERT INTO users (user_name, email, session_limit_minutes, daily_limit_minutes)
 VALUES
 ('Sean', 'sean@example.com', 15, 60),
 ('Alex', 'alex@example.com', 15, 60),

@@ -18,7 +18,14 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.clearspace.data.network.EndSessionRequest
+import com.example.clearspace.data.network.RetrofitClient
+import com.example.clearspace.data.network.StartSessionRequest
+import com.example.clearspace.data.network.UpdateSessionDurationRequest
 import com.example.clearspace.utils.PermissionUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AppMonitorService : Service() {
 
@@ -49,11 +56,22 @@ class AppMonitorService : Service() {
     private var isStoppingIntentionally = false
     private var lastChallengeLaunchAt = 0L
 
+    private var hasOpenSession = false
+    private var lastDurationUpdateAt = 0L
+    private val durationUpdateIntervalMs = 5000L
+
     private lateinit var stateManager: ClearSpaceStateManager
+
+    private val currentUserId: Int
+        get() = stateManager.getLoggedInUserId()
 
     private val monitorRunnable = object : Runnable {
         override fun run() {
-            checkAppUsageAndBlock()
+            try {
+                checkAppUsageAndBlock()
+            } catch (e: Exception) {
+                Log.e(TAG, "Monitor loop crashed: ${e.message}", e)
+            }
             handler.postDelayed(this, checkInterval)
         }
     }
@@ -124,6 +142,7 @@ class AppMonitorService : Service() {
     private fun checkAppUsageAndBlock() {
         if (!PermissionUtils.hasUsageStatsPermission(this) || !PermissionUtils.hasOverlayPermission(this)) {
             Log.w(TAG, "Required permissions missing. Cannot enforce block properly.")
+            endSessionIfNeeded()
             resetSessionOnly()
             stopOverlayIfNeeded()
             return
@@ -132,6 +151,7 @@ class AppMonitorService : Service() {
         val isEnabled = stateManager.isMonitoringEnabled()
         val timeLimitMinutes = stateManager.getTimeLimitMinutes()
         val targetAppPackage = stateManager.getTargetAppPackage().orEmpty()
+        val targetAppName = stateManager.getTargetAppName().orEmpty()
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
         val isChallengeTransitioning = isInChallengeTransitionWindow()
@@ -139,6 +159,7 @@ class AppMonitorService : Service() {
 
         if (!isEnabled || targetAppPackage.isBlank()) {
             Log.d(TAG, "Monitoring disabled or no target app selected.")
+            endSessionIfNeeded()
             resetAllTrackingState()
             stopOverlayIfNeeded()
             stopSelf()
@@ -146,10 +167,6 @@ class AppMonitorService : Service() {
         }
 
         val currentForegroundApp = getCurrentForegroundApp()
-
-        if (currentForegroundApp.isNotBlank()) {
-            lastKnownApp = currentForegroundApp
-        }
 
         val effectiveForegroundApp = when {
             currentForegroundApp.isNotBlank() -> currentForegroundApp
@@ -159,12 +176,26 @@ class AppMonitorService : Service() {
 
         Log.d(
             TAG,
-            "Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive, Transitioning=$isChallengeTransitioning"
+            "UserId=$currentUserId, Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive, Transitioning=$isChallengeTransitioning, OpenSession=$hasOpenSession"
         )
 
         if (effectiveForegroundApp.isBlank()) {
             return
         }
+
+        if (effectiveForegroundApp == targetAppPackage && !hasOpenSession) {
+            startSessionIfNeeded(targetAppName)
+        }
+
+        if (effectiveForegroundApp == targetAppPackage) {
+            updateSessionDurationIfNeeded(targetAppName)
+        }
+
+        if (effectiveForegroundApp != targetAppPackage && hasOpenSession) {
+            endSessionIfNeeded(targetAppName)
+        }
+
+        lastKnownApp = effectiveForegroundApp
 
         if (isLocked) {
             resetSessionOnly()
@@ -184,15 +215,10 @@ class AppMonitorService : Service() {
                 return
             }
 
-            // Locked but challenge not started yet:
-            // keep overlay enforced globally over any app/home screen,
-            // and if user somehow gets back into the target app, keep re-enforcing.
             if (!OverlayService.isRunning) {
                 ensureOverlayShowing()
             }
 
-            // If the user gets back to the target app or any other app while locked,
-            // keep the overlay alive globally.
             if (effectiveForegroundApp != ownPackage || effectiveForegroundApp == targetAppPackage) {
                 ensureOverlayShowing()
             }
@@ -203,7 +229,7 @@ class AppMonitorService : Service() {
         if (effectiveForegroundApp == targetAppPackage) {
             if (sessionStartTime == 0L) {
                 sessionStartTime = System.currentTimeMillis()
-                Log.d(TAG, "Target app session started for package: $targetAppPackage")
+                Log.d(TAG, "Target app session timer started for package: $targetAppPackage")
             }
 
             val currentSessionTimeMs = System.currentTimeMillis() - sessionStartTime
@@ -227,6 +253,72 @@ class AppMonitorService : Service() {
 
             if (!isLocked) {
                 stopOverlayIfNeeded()
+            }
+        }
+    }
+
+    private fun startSessionIfNeeded(targetAppName: String) {
+        if (hasOpenSession || targetAppName.isBlank()) return
+
+        hasOpenSession = true
+        lastDurationUpdateAt = 0L
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.api.startSession(
+                    StartSessionRequest(
+                        user_id = currentUserId,
+                        regulated_app = targetAppName
+                    )
+                )
+                Log.d("SESSION_API", "Session started: $response")
+            } catch (e: Exception) {
+                hasOpenSession = false
+                Log.e("SESSION_API", "Start error: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun updateSessionDurationIfNeeded(targetAppName: String) {
+        if (!hasOpenSession || targetAppName.isBlank()) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastDurationUpdateAt < durationUpdateIntervalMs) return
+
+        lastDurationUpdateAt = now
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.api.updateSessionDuration(
+                    UpdateSessionDurationRequest(
+                        user_id = currentUserId,
+                        regulated_app = targetAppName
+                    )
+                )
+                Log.d("SESSION_API", "Duration updated: $response")
+            } catch (e: Exception) {
+                Log.e("SESSION_API", "Duration update error: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun endSessionIfNeeded(targetAppName: String? = stateManager.getTargetAppName()) {
+        if (!hasOpenSession || targetAppName.isNullOrBlank()) return
+
+        hasOpenSession = false
+        lastDurationUpdateAt = 0L
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val response = RetrofitClient.api.endSession(
+                    EndSessionRequest(
+                        user_id = currentUserId,
+                        regulated_app = targetAppName
+                    )
+                )
+                Log.d("SESSION_API", "Session ended: $response")
+            } catch (e: Exception) {
+                Log.e("SESSION_API", "End error: ${e.message}", e)
             }
         }
     }
@@ -364,6 +456,8 @@ class AppMonitorService : Service() {
         sessionStartTime = 0L
         lastKnownApp = ""
         lastChallengeLaunchAt = 0L
+        hasOpenSession = false
+        lastDurationUpdateAt = 0L
         clearChallengeTransitionWindow()
         stateManager.resetLockState()
     }
@@ -376,8 +470,10 @@ class AppMonitorService : Service() {
         handler.removeCallbacks(monitorRunnable)
 
         if (clearState) {
+            endSessionIfNeeded()
             resetAllTrackingState()
         } else {
+            endSessionIfNeeded()
             resetSessionOnly()
         }
 
@@ -398,6 +494,7 @@ class AppMonitorService : Service() {
         Log.d(TAG, "Service destroyed. IntentionalStop=$isStoppingIntentionally")
 
         handler.removeCallbacks(monitorRunnable)
+        endSessionIfNeeded()
 
         if (!isStoppingIntentionally) {
             stopMonitoring(clearState = false)

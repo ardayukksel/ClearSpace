@@ -3,19 +3,23 @@ package com.example.clearspace
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.graphics.Typeface
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.clearspace.data.network.FindOrCreateUserRequest
+import com.example.clearspace.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
@@ -33,26 +37,36 @@ class LoginActivity : AppCompatActivity() {
         val tvForgotPassword = findViewById<TextView>(R.id.tv_forgot_password)
         val tvSignup = findViewById<TextView>(R.id.tv_signup)
 
-        // Style subtitle with colored text
         val subtitleText = "Sign in to continue your focus journey"
         val spannableSubtitle = SpannableString(subtitleText)
         val startIndex = subtitleText.indexOf("focus journey")
         val endIndex = startIndex + "focus journey".length
-        spannableSubtitle.setSpan(ForegroundColorSpan(Color.parseColor("#4CAF50")), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableSubtitle.setSpan(StyleSpan(Typeface.BOLD), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableSubtitle.setSpan(
+            ForegroundColorSpan(Color.parseColor("#4CAF50")),
+            startIndex,
+            endIndex,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannableSubtitle.setSpan(
+            StyleSpan(Typeface.BOLD),
+            startIndex,
+            endIndex,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
         tvSubtitle.text = spannableSubtitle
 
         val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
+        val stateManager = ClearSpaceStateManager(this)
         val hasCompletedOnboarding = sharedPref.getBoolean("hasCompletedOnboarding", false)
 
-        // Password visibility toggle
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
             if (isPasswordVisible) {
                 etPassword.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                 ivTogglePassword.setImageResource(R.drawable.ic_visibility)
             } else {
-                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                etPassword.inputType =
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                 ivTogglePassword.setImageResource(R.drawable.ic_visibility_off)
             }
             etPassword.setSelection(etPassword.text.length)
@@ -67,20 +81,53 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val name = email.substringBefore("@").replace(Regex("[._]"), " ").trim()
-            sharedPref.edit()
-                .putString("userName", if (name.isBlank()) "User" else name)
-                .putString("userEmail", email)
-                .apply()
+            val fallbackName = email.substringBefore("@")
+                .replace(Regex("[._]"), " ")
+                .trim()
+                .ifBlank { "User" }
 
-            val nextActivity = if (hasCompletedOnboarding) {
-                MainActivity::class.java
-            } else {
-                OnboardingActivity::class.java
+            lifecycleScope.launch {
+                try {
+                    val response = RetrofitClient.api.findOrCreateUser(
+                        FindOrCreateUserRequest(email = email)
+                    )
+
+                    stateManager.saveLoggedInUser(
+                        response.user_id,
+                        response.email,
+                        response.user_name
+                    )
+
+                    val nextActivity = if (hasCompletedOnboarding) {
+                        MainActivity::class.java
+                    } else {
+                        OnboardingActivity::class.java
+                    }
+
+                    startActivity(Intent(this@LoginActivity, nextActivity))
+                    finish()
+                } catch (e: Exception) {
+                    sharedPref.edit()
+                        .putString("userName", fallbackName)
+                        .putString("userEmail", email)
+                        .apply()
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Login saved locally. Backend unavailable.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val nextActivity = if (hasCompletedOnboarding) {
+                        MainActivity::class.java
+                    } else {
+                        OnboardingActivity::class.java
+                    }
+
+                    startActivity(Intent(this@LoginActivity, nextActivity))
+                    finish()
+                }
             }
-
-            startActivity(Intent(this, nextActivity))
-            finish()
         }
 
         tvForgotPassword.setOnClickListener {

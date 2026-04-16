@@ -79,4 +79,26 @@ class ClearSpaceStateManager(context: Context) {
             .putBoolean(AppMonitorService.KEY_TARGET_ENABLED, false)
             .commit()
     }
+
+    fun saveLoggedInUser(userId: Int, email: String, userName: String) {
+        prefs.edit()
+            .putInt("logged_in_user_id", userId)
+            .putString("logged_in_email", email)
+            .putString("logged_in_user_name", userName)
+            .putString("userName", userName)
+            .putString("userEmail", email)
+            .apply()
+    }
+
+    fun getLoggedInUserId(): Int {
+        return prefs.getInt("logged_in_user_id", 1)
+    }
+
+    fun getLoggedInEmail(): String {
+        return prefs.getString("logged_in_email", "") ?: ""
+    }
+
+    fun getLoggedInUserName(): String {
+        return prefs.getString("logged_in_user_name", "Alex") ?: "Alex"
+    }
 }

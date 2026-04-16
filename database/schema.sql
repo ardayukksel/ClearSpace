@@ -11,7 +11,7 @@ USE self_regulation_app;
 -- ========================================
 CREATE TABLE users (
     user_id                 BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name                    VARCHAR(120) NOT NULL,
+    user_name                   VARCHAR(120) NOT NULL,
     email                   VARCHAR(190) NOT NULL,
     password_hash           VARCHAR(255) NULL,
     session_limit_minutes   INT UNSIGNED NOT NULL DEFAULT 15,
@@ -19,7 +19,8 @@ CREATE TABLE users (
     locked_until            DATETIME NULL,
     created_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id),
+	last_login_at 			DATETIME NULL,
+   PRIMARY KEY (user_id),
     UNIQUE KEY uq_users_email (email),
     CONSTRAINT chk_users_limits
         CHECK (session_limit_minutes > 0 AND daily_limit_minutes > 0)
