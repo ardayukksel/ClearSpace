@@ -21,7 +21,7 @@
         android:id="@+id/tv_challenge_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Complete the breathing exercise before you continue."
+        android:text="Complete the challenge before you continue."
         android:textSize="16sp"
         android:textColor="@color/challengeSubtext"
         android:gravity="center"
@@ -52,10 +52,36 @@
         android:id="@+id/tv_progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cycle 1 / 6"
+        android:text="Challenge progress"
         android:textSize="15sp"
         android:textColor="@color/challengeSubtext"
-        android:layout_marginBottom="48dp" />
+        android:layout_marginBottom="24dp" />
+
+    <EditText
+        android:id="@+id/et_answer"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginBottom="16dp"
+        android:hint="Enter answer"
+        android:inputType="numberSigned"
+        android:paddingHorizontal="16dp"
+        android:textColor="@color/challengeText"
+        android:textColorHint="@color/challengeSubtext"
+        android:backgroundTint="@color/challengeButton"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/btn_action"
+        android:layout_width="match_parent"
+        android:layout_height="58dp"
+        android:text="Action"
+        android:textAllCaps="false"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:backgroundTint="@color/challengeButton"
+        android:textColor="@color/challengeButtonText"
+        android:layout_marginBottom="16dp"
+        android:visibility="gone" />
 
     <Button
         android:id="@+id/btn_unlock"

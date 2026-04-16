@@ -5,12 +5,16 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import kotlin.math.max
+import kotlin.random.Random
 
 class ChallengeActivity : AppCompatActivity() {
 
@@ -31,6 +35,13 @@ class ChallengeActivity : AppCompatActivity() {
         EXHALE("Breathe Out", 4)
     }
 
+    private enum class ChallengeType {
+        BREATHING,
+        RAPID_TAP,
+        HOLD_STILL,
+        SIMPLE_MATH
+    }
+
     private var isUnlocking = false
     private var isRelaunchScheduled = false
     private val relaunchHandler = Handler(Looper.getMainLooper())
@@ -42,10 +53,14 @@ class ChallengeActivity : AppCompatActivity() {
     private lateinit var tvPhase: TextView
     private lateinit var tvTimer: TextView
     private lateinit var tvProgress: TextView
+    private lateinit var etAnswer: EditText
+    private lateinit var btnAction: Button
     private lateinit var btnUnlock: Button
 
     private var challengeMode: String = MODE_LOCKED
+    private var currentChallengeType: ChallengeType = ChallengeType.BREATHING
 
+    // Breathing challenge
     private val phaseSequence = listOf(
         BreathPhase.INHALE,
         BreathPhase.HOLD,
@@ -54,8 +69,39 @@ class ChallengeActivity : AppCompatActivity() {
         BreathPhase.HOLD,
         BreathPhase.EXHALE
     )
-
     private var currentPhaseIndex = 0
+
+    // Rapid tap challenge
+    private var tapTarget = 20
+    private var tapCount = 0
+
+    // Hold challenge
+    private var holdRequiredMs = 4000L
+    private var holdStartTime = 0L
+    private var isHolding = false
+    private val holdHandler = Handler(Looper.getMainLooper())
+    private val holdRunnable = object : Runnable {
+        override fun run() {
+            if (!isHolding) return
+
+            val elapsed = System.currentTimeMillis() - holdStartTime
+            val remaining = max(0L, holdRequiredMs - elapsed)
+            val secondsLeft = ((remaining + 999L) / 1000L).toInt()
+
+            tvTimer.text = secondsLeft.toString()
+            tvProgress.text = "Keep holding..."
+
+            if (elapsed >= holdRequiredMs) {
+                isHolding = false
+                finishChallengeSuccess()
+            } else {
+                holdHandler.postDelayed(this, 50L)
+            }
+        }
+    }
+
+    // Math challenge
+    private var mathAnswer = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +113,7 @@ class ChallengeActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                // Blocked intentionally while challenge is active
+                // blocked intentionally
             }
         })
 
@@ -76,6 +122,8 @@ class ChallengeActivity : AppCompatActivity() {
         tvPhase = findViewById(R.id.tv_phase)
         tvTimer = findViewById(R.id.tv_timer)
         tvProgress = findViewById(R.id.tv_progress)
+        etAnswer = findViewById(R.id.et_answer)
+        btnAction = findViewById(R.id.btn_action)
         btnUnlock = findViewById(R.id.btn_unlock)
 
         btnUnlock.visibility = View.GONE
@@ -88,7 +136,7 @@ class ChallengeActivity : AppCompatActivity() {
             stateManager.setChallengeActive(false)
         }
 
-        startBreathingChallenge()
+        startSelectedChallenge()
 
         btnUnlock.setOnClickListener {
             if (challengeMode == MODE_MANUAL) {
@@ -128,10 +176,52 @@ class ChallengeActivity : AppCompatActivity() {
         }
     }
 
-    private fun startBreathingChallenge() {
-        currentPhaseIndex = 0
+    private fun startSelectedChallenge() {
+        resetDynamicViews()
+
+        currentChallengeType = if (challengeMode == MODE_MANUAL) {
+            ChallengeType.BREATHING
+        } else {
+            listOf(
+                ChallengeType.BREATHING,
+                ChallengeType.RAPID_TAP,
+                ChallengeType.HOLD_STILL,
+                ChallengeType.SIMPLE_MATH
+            ).random()
+        }
+
+        when (currentChallengeType) {
+            ChallengeType.BREATHING -> startBreathingChallenge()
+            ChallengeType.RAPID_TAP -> startRapidTapChallenge()
+            ChallengeType.HOLD_STILL -> startHoldChallenge()
+            ChallengeType.SIMPLE_MATH -> startMathChallenge()
+        }
+    }
+
+    private fun resetDynamicViews() {
+        countDownTimer?.cancel()
+        holdHandler.removeCallbacksAndMessages(null)
+        isHolding = false
+
+        etAnswer.setText("")
+        etAnswer.visibility = View.GONE
+
+        btnAction.visibility = View.GONE
+        btnAction.isEnabled = true
+        btnAction.text = ""
+        btnAction.setOnClickListener(null)
+        btnAction.setOnTouchListener(null)
+
         btnUnlock.visibility = View.GONE
         btnUnlock.isEnabled = false
+    }
+
+    // --------------------------------------------------
+    // Breathing challenge
+    // --------------------------------------------------
+
+    private fun startBreathingChallenge() {
+        currentPhaseIndex = 0
 
         if (challengeMode == MODE_MANUAL) {
             tvChallengeTitle.text = "Focus Reset"
@@ -146,7 +236,7 @@ class ChallengeActivity : AppCompatActivity() {
 
     private fun runCurrentPhase() {
         if (currentPhaseIndex >= phaseSequence.size) {
-            finishBreathingChallenge()
+            finishChallengeSuccess()
             return
         }
 
@@ -171,7 +261,149 @@ class ChallengeActivity : AppCompatActivity() {
         }.start()
     }
 
-    private fun finishBreathingChallenge() {
+    // --------------------------------------------------
+    // Rapid tap challenge
+    // --------------------------------------------------
+
+    private fun startRapidTapChallenge() {
+        tapTarget = 20
+        tapCount = 0
+
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
+            "Energy Reset"
+        } else {
+            "Quick Action"
+        }
+
+        tvChallengeSubtitle.text = "Tap the button $tapTarget times to continue."
+        tvPhase.text = "Tap Fast"
+        tvTimer.text = tapCount.toString()
+        tvProgress.text = "$tapCount / $tapTarget taps"
+
+        btnAction.visibility = View.VISIBLE
+        btnAction.text = "Tap Me"
+        btnAction.setOnClickListener {
+            tapCount++
+            tvTimer.text = tapCount.toString()
+            tvProgress.text = "$tapCount / $tapTarget taps"
+
+            if (tapCount >= tapTarget) {
+                finishChallengeSuccess()
+            }
+        }
+    }
+
+    // --------------------------------------------------
+    // Hold challenge
+    // --------------------------------------------------
+
+    private fun startHoldChallenge() {
+        holdRequiredMs = 4000L
+
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
+            "Steady Focus"
+        } else {
+            "Hold Your Focus"
+        }
+
+        tvChallengeSubtitle.text = "Press and hold the button for 4 seconds without letting go."
+        tvPhase.text = "Press & Hold"
+        tvTimer.text = "4"
+        tvProgress.text = "Hold steadily"
+
+        btnAction.visibility = View.VISIBLE
+        btnAction.text = "Hold Me"
+
+        btnAction.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (!isHolding) {
+                        isHolding = true
+                        holdStartTime = System.currentTimeMillis()
+                        holdHandler.removeCallbacksAndMessages(null)
+                        holdHandler.post(holdRunnable)
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (isHolding) {
+                        isHolding = false
+                        holdHandler.removeCallbacksAndMessages(null)
+                        tvTimer.text = "4"
+                        tvProgress.text = "Released too early — try again"
+                    }
+                    true
+                }
+
+                else -> true
+            }
+        }
+    }
+
+    // --------------------------------------------------
+    // Math challenge
+    // --------------------------------------------------
+
+    private fun startMathChallenge() {
+        val a = Random.nextInt(2, 10)
+        val b = Random.nextInt(2, 10)
+        val useAddition = Random.nextBoolean()
+
+        mathAnswer = if (useAddition) a + b else a - b
+        val symbol = if (useAddition) "+" else "-"
+
+        tvChallengeTitle.text = if (challengeMode == MODE_MANUAL) {
+            "Mental Reset"
+        } else {
+            "Quick Check"
+        }
+
+        tvChallengeSubtitle.text = "Solve the math problem to continue."
+        tvPhase.text = "$a $symbol $b = ?"
+        tvTimer.text = "?"
+        tvProgress.text = "Enter your answer"
+
+        etAnswer.visibility = View.VISIBLE
+        btnAction.visibility = View.VISIBLE
+        btnAction.text = "Submit"
+
+        btnAction.setOnClickListener {
+            val typed = etAnswer.text.toString().trim()
+
+            if (typed.isBlank()) {
+                Toast.makeText(this, "Enter an answer first", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val userAnswer = typed.toIntOrNull()
+            if (userAnswer == null) {
+                Toast.makeText(this, "Please enter a valid number", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (userAnswer == mathAnswer) {
+                finishChallengeSuccess()
+            } else {
+                etAnswer.setText("")
+                tvProgress.text = "Wrong answer — try again"
+                Toast.makeText(this, "Wrong answer", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // --------------------------------------------------
+    // Shared finish logic
+    // --------------------------------------------------
+
+    private fun finishChallengeSuccess() {
+        countDownTimer?.cancel()
+        holdHandler.removeCallbacksAndMessages(null)
+        isHolding = false
+
+        etAnswer.visibility = View.GONE
+        btnAction.visibility = View.GONE
+
         tvPhase.text = "Ready"
         tvTimer.text = "✓"
         tvProgress.text = "Challenge complete"
@@ -286,6 +518,8 @@ class ChallengeActivity : AppCompatActivity() {
     override fun onDestroy() {
         countDownTimer?.cancel()
         relaunchHandler.removeCallbacksAndMessages(null)
+        holdHandler.removeCallbacksAndMessages(null)
+        isHolding = false
         isVisible = false
         super.onDestroy()
     }
