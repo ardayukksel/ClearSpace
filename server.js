@@ -21,8 +21,37 @@ db.connect((err) => {
   console.log("Connected to Self_Regulation_App database");
 });
 
+function isValidEmail(email) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function isValidPassword(password) {
+  return typeof password === "string" &&
+    password.length >= 8 &&
+    /[A-Z]/.test(password) &&
+    /[a-z]/.test(password) &&
+    /\d/.test(password);
+}
+
 app.post("/users/find-or-create", (req, res) => {
-  const { email } = req.body;
+  const { email, password } = req.body;
+
+  console.log("Incoming /users/find-or-create request:", { email, password });
+
+  if (!email || !isValidEmail(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format"
+    });
+  }
+
+  if (!password || !isValidPassword(password)) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 8 characters and include uppercase, lowercase, and a number"
+    });
+  }
 
   const findSql = `
     SELECT user_id, user_name, email
@@ -33,7 +62,10 @@ app.post("/users/find-or-create", (req, res) => {
 
   db.query(findSql, [email], (findErr, results) => {
     if (findErr) {
-      return res.status(500).json({ success: false, error: findErr.message });
+      return res.status(500).json({
+        success: false,
+        message: findErr.message
+      });
     }
 
     if (results.length > 0) {
@@ -49,16 +81,19 @@ app.post("/users/find-or-create", (req, res) => {
     const derivedName = email.split("@")[0];
 
     const insertSql = `
-      INSERT INTO users (user_name, email, session_limit_minutes, daily_limit_minutes)
-      VALUES (?, ?, 15, 60)
+      INSERT INTO users (user_name, email, password_hash, session_limit_minutes, daily_limit_minutes)
+      VALUES (?, ?, ?, 15, 60)
     `;
 
-    db.query(insertSql, [derivedName, email], (insertErr, insertResult) => {
+    db.query(insertSql, [derivedName, email, password], (insertErr, insertResult) => {
       if (insertErr) {
-        return res.status(500).json({ success: false, error: insertErr.message });
+        return res.status(500).json({
+          success: false,
+          message: insertErr.message
+        });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: "User created",
         user_id: insertResult.insertId,

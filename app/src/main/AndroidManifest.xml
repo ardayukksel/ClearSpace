@@ -74,6 +74,8 @@
             android:exported="false"
             android:theme="@style/Theme.ClearSpace"/>
 
+        <activity android:name=".ChallengePreferencesActivity" />
+
         <service
             android:name=".OverlayService"
             android:exported="false" />

@@ -5,6 +5,14 @@ import android.content.SharedPreferences
 
 class ClearSpaceStateManager(context: Context) {
 
+    companion object {
+        private const val KEY_CHALLENGE_BREATHING = "challenge_breathing"
+        private const val KEY_CHALLENGE_TAP = "challenge_tap"
+        private const val KEY_CHALLENGE_HOLD = "challenge_hold"
+        private const val KEY_CHALLENGE_MATH = "challenge_math"
+        private const val KEY_CHALLENGE_RANDOM = "challenge_random"
+    }
+
     private val prefs: SharedPreferences =
         context.getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -80,6 +88,7 @@ class ClearSpaceStateManager(context: Context) {
             .commit()
     }
 
+<<<<<<< HEAD
     fun saveLoggedInUser(userId: Int, email: String, userName: String) {
         prefs.edit()
             .putInt("logged_in_user_id", userId)
@@ -100,5 +109,41 @@ class ClearSpaceStateManager(context: Context) {
 
     fun getLoggedInUserName(): String {
         return prefs.getString("logged_in_user_name", "Alex") ?: "Alex"
+=======
+    fun saveChallengePreferences(
+        breathing: Boolean,
+        tap: Boolean,
+        hold: Boolean,
+        math: Boolean,
+        random: Boolean
+    ) {
+        prefs.edit()
+            .putBoolean(KEY_CHALLENGE_BREATHING, breathing)
+            .putBoolean(KEY_CHALLENGE_TAP, tap)
+            .putBoolean(KEY_CHALLENGE_HOLD, hold)
+            .putBoolean(KEY_CHALLENGE_MATH, math)
+            .putBoolean(KEY_CHALLENGE_RANDOM, random)
+            .apply()
+    }
+
+    fun isBreathingChallengeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CHALLENGE_BREATHING, true)
+    }
+
+    fun isTapChallengeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CHALLENGE_TAP, false)
+    }
+
+    fun isHoldChallengeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
+    }
+
+    fun isMathChallengeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CHALLENGE_MATH, false)
+    }
+
+    fun isRandomChallengeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CHALLENGE_RANDOM, false)
+>>>>>>> 0628ee3c01178e26ff34b09ca5a70da8f5ce285b
     }
 }

@@ -10,6 +10,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
@@ -20,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.clearspace.data.network.FindOrCreateUserRequest
 import com.example.clearspace.data.network.RetrofitClient
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class LoginActivity : AppCompatActivity() {
 
@@ -62,7 +64,8 @@ class LoginActivity : AppCompatActivity() {
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
             if (isPasswordVisible) {
-                etPassword.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                etPassword.inputType =
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                 ivTogglePassword.setImageResource(R.drawable.ic_visibility)
             } else {
                 etPassword.inputType =
@@ -76,20 +79,39 @@ class LoginActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
 
-            if (email.isBlank() || password.isBlank()) {
-                Toast.makeText(this, "Please enter your email and password.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
+            when {
+                email.isBlank() -> {
+                    etEmail.error = "Email is required"
+                    etEmail.requestFocus()
+                    return@setOnClickListener
+                }
 
-            val fallbackName = email.substringBefore("@")
-                .replace(Regex("[._]"), " ")
-                .trim()
-                .ifBlank { "User" }
+                !isValidEmail(email) -> {
+                    etEmail.error = "Enter a valid email address"
+                    etEmail.requestFocus()
+                    return@setOnClickListener
+                }
+
+                password.isBlank() -> {
+                    etPassword.error = "Password is required"
+                    etPassword.requestFocus()
+                    return@setOnClickListener
+                }
+
+                !isValidPassword(password) -> {
+                    etPassword.error = "Password must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number"
+                    etPassword.requestFocus()
+                    return@setOnClickListener
+                }
+            }
 
             lifecycleScope.launch {
                 try {
                     val response = RetrofitClient.api.findOrCreateUser(
-                        FindOrCreateUserRequest(email = email)
+                        FindOrCreateUserRequest(
+                            email = email,
+                            password = password
+                        )
                     )
 
                     stateManager.saveLoggedInUser(
@@ -106,26 +128,19 @@ class LoginActivity : AppCompatActivity() {
 
                     startActivity(Intent(this@LoginActivity, nextActivity))
                     finish()
-                } catch (e: Exception) {
-                    sharedPref.edit()
-                        .putString("userName", fallbackName)
-                        .putString("userEmail", email)
-                        .apply()
-
+                } catch (e: HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string()
                     Toast.makeText(
                         this@LoginActivity,
-                        "Login saved locally. Backend unavailable.",
-                        Toast.LENGTH_SHORT
+                        "Login failed: ${errorBody ?: "HTTP ${e.code()}"}",
+                        Toast.LENGTH_LONG
                     ).show()
-
-                    val nextActivity = if (hasCompletedOnboarding) {
-                        MainActivity::class.java
-                    } else {
-                        OnboardingActivity::class.java
-                    }
-
-                    startActivity(Intent(this@LoginActivity, nextActivity))
-                    finish()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "Login failed: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -137,5 +152,16 @@ class LoginActivity : AppCompatActivity() {
         tvSignup.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
         }
+    }
+
+    private fun isValidEmail(email: String): Boolean {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
+
+    private fun isValidPassword(password: String): Boolean {
+        return password.length >= 8 &&
+                password.any { it.isUpperCase() } &&
+                password.any { it.isLowerCase() } &&
+                password.any { it.isDigit() }
     }
 }

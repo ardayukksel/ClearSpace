@@ -66,14 +66,16 @@ class DashboardActivity : AppCompatActivity() {
         circularProgress.max = 100
         circularProgress.progress = 100
 
-        // Challenge state
+        // Challenge preferences summary
+        val challengeSummary = buildChallengeSummary()
+
         if (isChallengeActive) {
             tvChallengeTitle.text = "Challenge active"
             tvChallengeSubtitle.text = "Complete to unlock"
             btnSetupChallenge.visibility = android.view.View.GONE
         } else {
-            tvChallengeTitle.text = "No challenge set"
-            tvChallengeSubtitle.text = "Set in the Focus tab"
+            tvChallengeTitle.text = "Challenge preferences"
+            tvChallengeSubtitle.text = challengeSummary
             btnSetupChallenge.visibility = android.view.View.VISIBLE
         }
 
@@ -83,7 +85,7 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         btnSetupChallenge.setOnClickListener {
-            startActivity(Intent(this, ChallengeActivity::class.java))
+            startActivity(Intent(this, ChallengePreferencesActivity::class.java))
         }
 
         onboardingCard.setOnClickListener {
@@ -99,14 +101,63 @@ class DashboardActivity : AppCompatActivity() {
                     finish()
                     true
                 }
+
                 R.id.nav_dashboard -> true
+
                 R.id.nav_focus -> {
-                    startActivity(Intent(this, ChallengeActivity::class.java))
+                    val intent = Intent(this, ChallengeActivity::class.java).apply {
+                        putExtra(ChallengeActivity.EXTRA_MODE, ChallengeActivity.MODE_MANUAL)
+                    }
+                    startActivity(intent)
                     finish()
                     true
                 }
+
                 else -> false
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        val tvChallengeTitle = findViewById<TextView>(R.id.tvChallengeTitle)
+        val tvChallengeSubtitle = findViewById<TextView>(R.id.tvChallengeSubtitle)
+        val btnSetupChallenge = findViewById<Button>(R.id.btnSetupChallenge)
+
+        if (stateManager.isChallengeActive()) {
+            tvChallengeTitle.text = "Challenge active"
+            tvChallengeSubtitle.text = "Complete to unlock"
+            btnSetupChallenge.visibility = android.view.View.GONE
+        } else {
+            tvChallengeTitle.text = "Challenge preferences"
+            tvChallengeSubtitle.text = buildChallengeSummary()
+            btnSetupChallenge.visibility = android.view.View.VISIBLE
+        }
+    }
+
+    private fun buildChallengeSummary(): String {
+        val selected = mutableListOf<String>()
+
+        if (stateManager.isBreathingChallengeEnabled()) selected.add("Breathing")
+        if (stateManager.isTapChallengeEnabled()) selected.add("Rapid Tap")
+        if (stateManager.isHoldChallengeEnabled()) selected.add("Hold")
+        if (stateManager.isMathChallengeEnabled()) selected.add("Math")
+
+        val randomEnabled = stateManager.isRandomChallengeEnabled()
+
+        return when {
+            randomEnabled && selected.isNotEmpty() ->
+                "Random from: ${selected.joinToString(", ")}"
+
+            randomEnabled ->
+                "Random from all challenge types"
+
+            selected.isNotEmpty() ->
+                selected.joinToString(", ")
+
+            else ->
+                "Breathing"
         }
     }
 

@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="@color/appBg">
 
-    <!-- Header with Back Button and Step Indicators -->
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,59 +22,75 @@
             android:contentDescription="Back"
             app:tint="@color/textPrimary" />
 
-        <!-- Step Indicators -->
-        <LinearLayout
+        <HorizontalScrollView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:scrollbars="none">
 
-            <TextView
-                android:id="@+id/step_age"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="① Age"
-                android:textSize="12sp"
-                android:textColor="@color/textPrimary"
-                android:background="@drawable/bg_step_active"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp" />
+                android:orientation="horizontal"
+                android:gravity="center">
 
-            <TextView
-                android:id="@+id/step_goals"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="② Goals"
-                android:textSize="12sp"
-                android:textColor="@color/mutedDark"
-                android:background="@drawable/bg_step_inactive"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
-                android:layout_marginStart="8dp" />
+                <TextView
+                    android:id="@+id/step_age"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="① Age"
+                    android:textSize="12sp"
+                    android:textColor="@color/textPrimary"
+                    android:background="@drawable/bg_step_active"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp" />
 
-            <TextView
-                android:id="@+id/step_tutorial"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="③ Tutorial"
-                android:textSize="12sp"
-                android:textColor="@color/mutedDark"
-                android:background="@drawable/bg_step_inactive"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
-                android:layout_marginStart="8dp" />
+                <TextView
+                    android:id="@+id/step_goals"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="② Goals"
+                    android:textSize="12sp"
+                    android:textColor="@color/mutedDark"
+                    android:background="@drawable/bg_step_inactive"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginStart="8dp" />
 
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/step_challenges"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="③ Challenges"
+                    android:textSize="12sp"
+                    android:textColor="@color/mutedDark"
+                    android:background="@drawable/bg_step_inactive"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginStart="8dp" />
+
+                <TextView
+                    android:id="@+id/step_tutorial"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="④ Tutorial"
+                    android:textSize="12sp"
+                    android:textColor="@color/mutedDark"
+                    android:background="@drawable/bg_step_inactive"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:layout_marginStart="8dp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
 
     </RelativeLayout>
 
-    <!-- Step Indicator Text -->
     <TextView
         android:id="@+id/step_indicator_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Step 1 of 3"
+        android:text="Step 1 of 4"
         android:textSize="12sp"
         android:textColor="@color/b600"
         android:background="@drawable/bg_step_pill"
@@ -84,25 +99,19 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="8dp" />
 
-    <!-- ViewFlipper for Steps -->
     <ViewFlipper
         android:id="@+id/view_flipper_onboarding"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
 
-        <!-- Step 1: Age Selection -->
         <include layout="@layout/onboarding_step_age" />
-
-        <!-- Step 2: Goals/Commitment -->
         <include layout="@layout/onboarding_step_goals" />
-
-        <!-- Step 3: Tutorial -->
+        <include layout="@layout/onboarding_step_challenges" />
         <include layout="@layout/onboarding_step_tutorial" />
 
     </ViewFlipper>
 
-    <!-- Continue Button -->
     <Button
         android:id="@+id/btn_next"
         android:layout_width="match_parent"

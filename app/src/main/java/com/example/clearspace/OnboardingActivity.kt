@@ -23,6 +23,7 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var stepIndicatorText: TextView
     private lateinit var stepAge: TextView
     private lateinit var stepGoals: TextView
+    private lateinit var stepChallenges: TextView
     private lateinit var stepTutorial: TextView
 
     private var currentStep = 0
@@ -35,17 +36,32 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var btnInspiration3: View
     private lateinit var btnSkip: View
 
+    private lateinit var cardChallengeBreathing: CardView
+    private lateinit var cardChallengeTap: CardView
+    private lateinit var cardChallengeHold: CardView
+    private lateinit var cardChallengeMath: CardView
+    private lateinit var cardChallengeRandom: CardView
+
     private lateinit var sharedPref: android.content.SharedPreferences
+    private lateinit var stateManager: ClearSpaceStateManager
+
+    private var isBreathingSelected = true
+    private var isTapSelected = false
+    private var isHoldSelected = false
+    private var isMathSelected = false
+    private var isRandomSelected = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_onboarding)
 
         sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
+        stateManager = ClearSpaceStateManager(this)
 
         initViews()
         setupAgeSelection()
         setupGoalStep()
+        setupChallengeStep()
         setupNavigation()
         updateStepUI()
         loadSavedValues()
@@ -58,6 +74,7 @@ class OnboardingActivity : AppCompatActivity() {
         stepIndicatorText = findViewById(R.id.step_indicator_text)
         stepAge = findViewById(R.id.step_age)
         stepGoals = findViewById(R.id.step_goals)
+        stepChallenges = findViewById(R.id.step_challenges)
         stepTutorial = findViewById(R.id.step_tutorial)
 
         etCommitment = findViewById(R.id.et_commitment)
@@ -66,6 +83,12 @@ class OnboardingActivity : AppCompatActivity() {
         btnInspiration2 = findViewById(R.id.btn_inspiration_2)
         btnInspiration3 = findViewById(R.id.btn_inspiration_3)
         btnSkip = findViewById(R.id.btn_skip)
+
+        cardChallengeBreathing = findViewById(R.id.card_challenge_breathing)
+        cardChallengeTap = findViewById(R.id.card_challenge_tap)
+        cardChallengeHold = findViewById(R.id.card_challenge_hold)
+        cardChallengeMath = findViewById(R.id.card_challenge_math)
+        cardChallengeRandom = findViewById(R.id.card_challenge_random)
     }
 
     private fun setupAgeSelection() {
@@ -93,7 +116,7 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun highlightSelectedAgeCard(cards: List<CardView>, selectedCard: CardView) {
-        cards.forEach { it.alpha = 0.5f }
+        cards.forEach { it.alpha = 0.55f }
         selectedCard.alpha = 1.0f
     }
 
@@ -133,11 +156,53 @@ class OnboardingActivity : AppCompatActivity() {
         etCommitment.setSelection(etCommitment.text.length)
     }
 
+    private fun setupChallengeStep() {
+        cardChallengeBreathing.setOnClickListener {
+            isBreathingSelected = !isBreathingSelected
+            updateChallengeCards()
+        }
+
+        cardChallengeTap.setOnClickListener {
+            isTapSelected = !isTapSelected
+            updateChallengeCards()
+        }
+
+        cardChallengeHold.setOnClickListener {
+            isHoldSelected = !isHoldSelected
+            updateChallengeCards()
+        }
+
+        cardChallengeMath.setOnClickListener {
+            isMathSelected = !isMathSelected
+            updateChallengeCards()
+        }
+
+        cardChallengeRandom.setOnClickListener {
+            isRandomSelected = !isRandomSelected
+            updateChallengeCards()
+        }
+
+        updateChallengeCards()
+    }
+
+    private fun updateChallengeCards() {
+        setChallengeCardState(cardChallengeBreathing, isBreathingSelected)
+        setChallengeCardState(cardChallengeTap, isTapSelected)
+        setChallengeCardState(cardChallengeHold, isHoldSelected)
+        setChallengeCardState(cardChallengeMath, isMathSelected)
+        setChallengeCardState(cardChallengeRandom, isRandomSelected)
+    }
+
+    private fun setChallengeCardState(card: CardView, isSelected: Boolean) {
+        card.alpha = if (isSelected) 1.0f else 0.55f
+        card.cardElevation = if (isSelected) 8f else 2f
+    }
+
     private fun setupNavigation() {
         btnBack.setOnClickListener {
             when (currentStep) {
                 0 -> finish()
-                1, 2 -> {
+                1, 2, 3 -> {
                     viewFlipper.showPrevious()
                     currentStep--
                     updateStepUI()
@@ -149,7 +214,8 @@ class OnboardingActivity : AppCompatActivity() {
             when (currentStep) {
                 0 -> handleAgeStep()
                 1 -> handleGoalsStep()
-                2 -> finishOnboarding()
+                2 -> handleChallengesStep()
+                3 -> finishOnboarding()
             }
         }
     }
@@ -187,6 +253,25 @@ class OnboardingActivity : AppCompatActivity() {
         updateStepUI()
     }
 
+    private fun handleChallengesStep() {
+        if (!isBreathingSelected && !isTapSelected && !isHoldSelected && !isMathSelected && !isRandomSelected) {
+            Toast.makeText(this, "Select at least one challenge.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        stateManager.saveChallengePreferences(
+            breathing = isBreathingSelected,
+            tap = isTapSelected,
+            hold = isHoldSelected,
+            math = isMathSelected,
+            random = isRandomSelected
+        )
+
+        viewFlipper.showNext()
+        currentStep = 3
+        updateStepUI()
+    }
+
     private fun finishOnboarding() {
         sharedPref.edit()
             .putBoolean("hasCompletedOnboarding", true)
@@ -199,47 +284,55 @@ class OnboardingActivity : AppCompatActivity() {
     private fun updateStepUI() {
         when (currentStep) {
             0 -> {
-                stepIndicatorText.text = "Step 1 of 3"
+                stepIndicatorText.text = "Step 1 of 4"
                 btnContinue.text = "Continue >"
 
-                stepAge.setBackgroundResource(R.drawable.bg_step_active)
-                stepAge.setTextColor(getColor(R.color.textPrimary))
-
-                stepGoals.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepGoals.setTextColor(getColor(R.color.mutedDark))
-
-                stepTutorial.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepTutorial.setTextColor(getColor(R.color.mutedDark))
+                activateStep(stepAge)
+                deactivateStep(stepGoals)
+                deactivateStep(stepChallenges)
+                deactivateStep(stepTutorial)
             }
 
             1 -> {
-                stepIndicatorText.text = "Step 2 of 3"
+                stepIndicatorText.text = "Step 2 of 4"
                 btnContinue.text = "Continue >"
 
-                stepAge.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepAge.setTextColor(getColor(R.color.mutedDark))
-
-                stepGoals.setBackgroundResource(R.drawable.bg_step_active)
-                stepGoals.setTextColor(getColor(R.color.textPrimary))
-
-                stepTutorial.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepTutorial.setTextColor(getColor(R.color.mutedDark))
+                deactivateStep(stepAge)
+                activateStep(stepGoals)
+                deactivateStep(stepChallenges)
+                deactivateStep(stepTutorial)
             }
 
             2 -> {
-                stepIndicatorText.text = "Step 3 of 3"
+                stepIndicatorText.text = "Step 3 of 4"
+                btnContinue.text = "Continue >"
+
+                deactivateStep(stepAge)
+                deactivateStep(stepGoals)
+                activateStep(stepChallenges)
+                deactivateStep(stepTutorial)
+            }
+
+            3 -> {
+                stepIndicatorText.text = "Step 4 of 4"
                 btnContinue.text = "Get Started"
 
-                stepAge.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepAge.setTextColor(getColor(R.color.mutedDark))
-
-                stepGoals.setBackgroundResource(R.drawable.bg_step_inactive)
-                stepGoals.setTextColor(getColor(R.color.mutedDark))
-
-                stepTutorial.setBackgroundResource(R.drawable.bg_step_active)
-                stepTutorial.setTextColor(getColor(R.color.textPrimary))
+                deactivateStep(stepAge)
+                deactivateStep(stepGoals)
+                deactivateStep(stepChallenges)
+                activateStep(stepTutorial)
             }
         }
+    }
+
+    private fun activateStep(textView: TextView) {
+        textView.setBackgroundResource(R.drawable.bg_step_active)
+        textView.setTextColor(getColor(R.color.textPrimary))
+    }
+
+    private fun deactivateStep(textView: TextView) {
+        textView.setBackgroundResource(R.drawable.bg_step_inactive)
+        textView.setTextColor(getColor(R.color.mutedDark))
     }
 
     private fun loadSavedValues() {
@@ -250,5 +343,17 @@ class OnboardingActivity : AppCompatActivity() {
             etCommitment.setText(savedGoal)
             etCommitment.setSelection(etCommitment.text.length)
         }
+
+        isBreathingSelected = stateManager.isBreathingChallengeEnabled()
+        isTapSelected = stateManager.isTapChallengeEnabled()
+        isHoldSelected = stateManager.isHoldChallengeEnabled()
+        isMathSelected = stateManager.isMathChallengeEnabled()
+        isRandomSelected = stateManager.isRandomChallengeEnabled()
+
+        if (!isBreathingSelected && !isTapSelected && !isHoldSelected && !isMathSelected && !isRandomSelected) {
+            isBreathingSelected = true
+        }
+
+        updateChallengeCards()
     }
 }

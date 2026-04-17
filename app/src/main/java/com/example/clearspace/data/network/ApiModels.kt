@@ -35,7 +35,8 @@ data class UpdateSessionDurationRequest(
 )
 
 data class FindOrCreateUserRequest(
-    val email: String
+    val email: String,
+    val password: String
 )
 
 data class FindOrCreateUserResponse(
