@@ -53,6 +53,24 @@ data class CompleteChallengeRequest(
     val result: String
 )
 
+data class StreakDto(
+    val user_id: Int,
+    val current_streak: Int,
+    val longest_streak: Int,
+    val last_streak_date: String?
+)
+
+data class CompleteChallengeResponse(
+    val success: Boolean,
+    val message: String,
+    val streak: StreakDto?
+)
+
+data class GetUserStreakResponse(
+    val success: Boolean,
+    val streak: StreakDto
+)
+
 data class GenericResponse(
     val success: Boolean,
     val message: String

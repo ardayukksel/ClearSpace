@@ -34,10 +34,87 @@ function isValidPassword(password) {
     /\d/.test(password);
 }
 
+function formatDateOnly(dateValue) {
+  if (!dateValue) return null;
+  const d = new Date(dateValue);
+  return d.toISOString().split("T")[0];
+}
+
+function updateUserStreak(userId, callback) {
+  const sql = `
+    SELECT user_id, current_streak, longest_streak, last_streak_date
+    FROM users
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) return callback(err);
+
+    if (results.length === 0) {
+      return callback(new Error("User not found"));
+    }
+
+    const user = results[0];
+    const todayStr = new Date().toISOString().split("T")[0];
+    const lastDate = formatDateOnly(user.last_streak_date);
+
+    let newCurrentStreak = user.current_streak || 0;
+    let newLongestStreak = user.longest_streak || 0;
+
+    // already counted today -> do not increment again
+    if (lastDate === todayStr) {
+      return callback(null, {
+        user_id: Number(userId),
+        current_streak: newCurrentStreak,
+        longest_streak: newLongestStreak,
+        last_streak_date: todayStr
+      });
+    }
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    if (!lastDate) {
+      newCurrentStreak = 1;
+    } else if (lastDate === yesterdayStr) {
+      newCurrentStreak += 1;
+    } else {
+      newCurrentStreak = 1;
+    }
+
+    if (newCurrentStreak > newLongestStreak) {
+      newLongestStreak = newCurrentStreak;
+    }
+
+    const updateSql = `
+      UPDATE users
+      SET current_streak = ?,
+          longest_streak = ?,
+          last_streak_date = ?
+      WHERE user_id = ?
+    `;
+
+    db.query(
+      updateSql,
+      [newCurrentStreak, newLongestStreak, todayStr, userId],
+      (updateErr) => {
+        if (updateErr) return callback(updateErr);
+
+        callback(null, {
+          user_id: Number(userId),
+          current_streak: newCurrentStreak,
+          longest_streak: newLongestStreak,
+          last_streak_date: todayStr
+        });
+      }
+    );
+  });
+}
+
 app.post("/users/find-or-create", (req, res) => {
   const { email, password } = req.body;
-
-  console.log("Incoming /users/find-or-create request:", { email, password });
 
   if (!email || !isValidEmail(email)) {
     return res.status(400).json({
@@ -62,10 +139,7 @@ app.post("/users/find-or-create", (req, res) => {
 
   db.query(findSql, [email], (findErr, results) => {
     if (findErr) {
-      return res.status(500).json({
-        success: false,
-        message: findErr.message
-      });
+      return res.status(500).json({ success: false, error: findErr.message });
     }
 
     if (results.length > 0) {
@@ -87,13 +161,10 @@ app.post("/users/find-or-create", (req, res) => {
 
     db.query(insertSql, [derivedName, email, password], (insertErr, insertResult) => {
       if (insertErr) {
-        return res.status(500).json({
-          success: false,
-          message: insertErr.message
-        });
+        return res.status(500).json({ success: false, error: insertErr.message });
       }
 
-      return res.json({
+      res.json({
         success: true,
         message: "User created",
         user_id: insertResult.insertId,
@@ -153,7 +224,7 @@ app.post("/sessions/update-duration", (req, res) => {
 app.post("/sessions/end", (req, res) => {
   const { user_id, regulated_app } = req.body;
 
-  const sql = `
+  const endSessionSql = `
     UPDATE sessions
     SET end_time = NOW(),
         duration_seconds = TIMESTAMPDIFF(SECOND, start_time, NOW())
@@ -164,15 +235,31 @@ app.post("/sessions/end", (req, res) => {
     LIMIT 1
   `;
 
-  db.query(sql, [user_id, regulated_app], (err, result) => {
+  db.query(endSessionSql, [user_id, regulated_app], (err, result) => {
     if (err) {
       return res.status(500).json({ success: false, error: err.message });
     }
 
-    res.json({
-      success: true,
-      message: "Session ended successfully",
-      rows_affected: result.affectedRows
+    if (result.affectedRows === 0) {
+      return res.json({
+        success: true,
+        message: "No active session found to end",
+        rows_affected: 0,
+        streak: null
+      });
+    }
+
+    updateUserStreak(user_id, (streakErr, streakData) => {
+      if (streakErr) {
+        return res.status(500).json({ success: false, error: streakErr.message });
+      }
+
+      res.json({
+        success: true,
+        message: "Session ended successfully and streak updated",
+        rows_affected: result.affectedRows,
+        streak: streakData
+      });
     });
   });
 });
@@ -206,9 +293,57 @@ app.post("/user-challenges/complete", (req, res) => {
       return res.status(500).json({ success: false, error: err.message });
     }
 
+    if (result === "completed") {
+      updateUserStreak(user_id, (streakErr, streakData) => {
+        if (streakErr) {
+          return res.status(500).json({ success: false, error: streakErr.message });
+        }
+
+        res.json({
+          success: true,
+          message: "Challenge completed successfully",
+          streak: streakData
+        });
+      });
+    } else {
+      res.json({
+        success: true,
+        message: "Challenge recorded successfully",
+        streak: null
+      });
+    }
+  });
+});
+
+app.get("/users/:userId/streak", (req, res) => {
+  const userId = req.params.userId;
+
+  const sql = `
+    SELECT user_id, current_streak, longest_streak, last_streak_date
+    FROM users
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const streak = results[0];
+
     res.json({
       success: true,
-      message: "Challenge completed successfully"
+      streak: {
+        user_id: streak.user_id,
+        current_streak: streak.current_streak,
+        longest_streak: streak.longest_streak,
+        last_streak_date: formatDateOnly(streak.last_streak_date)
+      }
     });
   });
 });

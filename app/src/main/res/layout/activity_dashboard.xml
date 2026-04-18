@@ -293,6 +293,54 @@
 
             </LinearLayout>
 
+            <!-- Streak Card -->
+            <LinearLayout
+                android:id="@+id/streakCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_edit_text"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔥 Streak Progress"
+                    android:textColor="@color/b800"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvCurrentStreak"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Current streak: --"
+                    android:textColor="@color/b800"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvLongestStreak"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Longest streak: --"
+                    android:textColor="@color/mutedDark"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvLastStreakDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Last completed day: --"
+                    android:textColor="@color/muted"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+
             <!-- Challenge Card -->
             <LinearLayout
                 android:id="@+id/challengeCard"

@@ -28,8 +28,7 @@ VALUES (1, 3, 'completed');
 
 -- Get all active challenges
 SELECT challenge_id, title, description, type
-FROM challenges
-WHERE active = TRUE;
+FROM challenges;
 
 -- End the latest open session for user 1
 UPDATE sessions
@@ -70,3 +69,11 @@ DELETE FROM sessions;
 SELECT *
 FROM sessions
 ORDER BY session_id DESC;
+
+SELECT user_id, user_name, current_streak, longest_streak, last_streak_date
+FROM users
+ORDER BY user_id;
+
+SELECT *
+FROM user_challenges
+ORDER BY user_challenge_id DESC;

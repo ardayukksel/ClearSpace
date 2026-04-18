@@ -3,6 +3,7 @@ package com.example.clearspace.data.network
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface ApiService {
 
@@ -22,5 +23,8 @@ interface ApiService {
     suspend fun findOrCreateUser(@Body request: FindOrCreateUserRequest): FindOrCreateUserResponse
 
     @POST("user-challenges/complete")
-    suspend fun completeChallenge(@Body request: CompleteChallengeRequest): GenericResponse
+    suspend fun completeChallenge(@Body request: CompleteChallengeRequest): CompleteChallengeResponse
+
+    @GET("users/{userId}/streak")
+    suspend fun getUserStreak(@Path("userId") userId: Int): GetUserStreakResponse
 }
