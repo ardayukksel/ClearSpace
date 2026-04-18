@@ -3,31 +3,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingHorizontal="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp">
 
-        <!-- Title with emoji -->
-        <LinearLayout
+        <!-- Title -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Your Commitment"
-                android:textSize="28sp"
-                android:textColor="@color/textPrimary"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium" />
-
-        </LinearLayout>
+            android:text="Your Commitment"
+            android:textSize="28sp"
+            android:textColor="@color/textPrimary"
+            android:textStyle="bold"
+            android:fontFamily="sans-serif-medium" />
 
         <!-- Subtitle -->
         <LinearLayout
@@ -109,7 +104,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="@drawable/bg_hint_card"
+            android:padding="16dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -219,7 +216,7 @@
                 android:layout_height="wrap_content"
                 android:text="Skip for now >"
                 android:textSize="16sp"
-                android:textColor="@color/textPrimary" />
+                android:textColor="@color/white" />
 
         </LinearLayout>
 
