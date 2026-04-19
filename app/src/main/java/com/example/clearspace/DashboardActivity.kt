@@ -4,17 +4,41 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.clearspace.data.network.RetrofitClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.CircularProgressIndicator
+import kotlinx.coroutines.launch
 
 class DashboardActivity : AppCompatActivity() {
 
     private lateinit var stateManager: ClearSpaceStateManager
     private var countDownTimer: CountDownTimer? = null
+
+    private lateinit var tvUserName: TextView
+    private lateinit var tvSessionBadge: TextView
+    private lateinit var tvLimitBadge: TextView
+    private lateinit var tvTimerDisplay: TextView
+    private lateinit var tvElapsedTime: TextView
+    private lateinit var tvRemainingTime: TextView
+    private lateinit var circularProgress: CircularProgressIndicator
+    private lateinit var tvChallengeTitle: TextView
+    private lateinit var tvChallengeSubtitle: TextView
+    private lateinit var btnSetupChallenge: Button
+    private lateinit var btnAddCommitment: Button
+    private lateinit var onboardingCard: LinearLayout
+    private lateinit var bottomNavigation: BottomNavigationView
+
+    private lateinit var tvCurrentStreak: TextView
+    private lateinit var tvLongestStreak: TextView
+    private lateinit var tvLastStreakDate: TextView
+    private lateinit var tvPoints: TextView
+    private lateinit var tvLevel: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,32 +46,54 @@ class DashboardActivity : AppCompatActivity() {
 
         stateManager = ClearSpaceStateManager(this)
 
-        // Views
-        val tvUserName = findViewById<TextView>(R.id.tvUserName)
-        val tvSessionBadge = findViewById<TextView>(R.id.tvSessionBadge)
-        val tvLimitBadge = findViewById<TextView>(R.id.tvLimitBadge)
-        val tvTimerDisplay = findViewById<TextView>(R.id.tvTimerDisplay)
-        val tvElapsedTime = findViewById<TextView>(R.id.tvElapsedTime)
-        val tvRemainingTime = findViewById<TextView>(R.id.tvRemainingTime)
-        val circularProgress = findViewById<CircularProgressIndicator>(R.id.circularProgress)
-        val tvChallengeTitle = findViewById<TextView>(R.id.tvChallengeTitle)
-        val tvChallengeSubtitle = findViewById<TextView>(R.id.tvChallengeSubtitle)
-        val btnSetupChallenge = findViewById<Button>(R.id.btnSetupChallenge)
-        val btnAddCommitment = findViewById<Button>(R.id.btnAddCommitment)
-        val onboardingCard = findViewById<LinearLayout>(R.id.onboardingCard)
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        initViews()
+        loadUserData()
+        loadSessionData()
+        refreshChallengeSection()
+        setupClickListeners()
+        setupBottomNavigation()
+        loadGamificationData()
+    }
 
-        // Load user data
+    override fun onResume() {
+        super.onResume()
+        refreshChallengeSection()
+        loadSessionData()
+        loadGamificationData()
+    }
+
+    private fun initViews() {
+        tvUserName = findViewById(R.id.tvUserName)
+        tvSessionBadge = findViewById(R.id.tvSessionBadge)
+        tvLimitBadge = findViewById(R.id.tvLimitBadge)
+        tvTimerDisplay = findViewById(R.id.tvTimerDisplay)
+        tvElapsedTime = findViewById(R.id.tvElapsedTime)
+        tvRemainingTime = findViewById(R.id.tvRemainingTime)
+        circularProgress = findViewById(R.id.circularProgress)
+        tvChallengeTitle = findViewById(R.id.tvChallengeTitle)
+        tvChallengeSubtitle = findViewById(R.id.tvChallengeSubtitle)
+        btnSetupChallenge = findViewById(R.id.btnSetupChallenge)
+        btnAddCommitment = findViewById(R.id.btnAddCommitment)
+        onboardingCard = findViewById(R.id.onboardingCard)
+        bottomNavigation = findViewById(R.id.bottomNavigation)
+
+        tvCurrentStreak = findViewById(R.id.tvCurrentStreak)
+        tvLongestStreak = findViewById(R.id.tvLongestStreak)
+        tvLastStreakDate = findViewById(R.id.tvLastStreakDate)
+        tvPoints = findViewById(R.id.tvPoints)
+        tvLevel = findViewById(R.id.tvLevel)
+    }
+
+    private fun loadUserData() {
         val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
         val name = sharedPref.getString("userName", "User") ?: "User"
         tvUserName.text = name
+    }
 
-        // Load session data
+    private fun loadSessionData() {
         val timeLimit = stateManager.getTimeLimitMinutes()
         val monitoringEnabled = stateManager.isMonitoringEnabled()
-        val isChallengeActive = stateManager.isChallengeActive()
 
-        // Update UI based on session state
         tvLimitBadge.text = "Limit: $timeLimit min"
 
         if (monitoringEnabled) {
@@ -58,30 +104,61 @@ class DashboardActivity : AppCompatActivity() {
             tvSessionBadge.setBackgroundResource(R.drawable.bg_session_badge)
         }
 
-        // Timer display
         val totalSeconds = timeLimit * 60
         tvTimerDisplay.text = formatTime(totalSeconds)
         tvRemainingTime.text = "$timeLimit min"
         tvElapsedTime.text = "0 min"
         circularProgress.max = 100
         circularProgress.progress = 100
+    }
 
-        // Challenge preferences summary
-        val challengeSummary = buildChallengeSummary()
-
-        if (isChallengeActive) {
+    private fun refreshChallengeSection() {
+        if (stateManager.isChallengeActive()) {
             tvChallengeTitle.text = "Challenge active"
             tvChallengeSubtitle.text = "Complete to unlock"
-            btnSetupChallenge.visibility = android.view.View.GONE
+            btnSetupChallenge.visibility = View.GONE
         } else {
             tvChallengeTitle.text = "Challenge preferences"
-            tvChallengeSubtitle.text = challengeSummary
-            btnSetupChallenge.visibility = android.view.View.VISIBLE
+            tvChallengeSubtitle.text = buildChallengeSummary()
+            btnSetupChallenge.visibility = View.VISIBLE
+        }
+    }
+
+    private fun loadGamificationData() {
+        val userId = stateManager.getLoggedInUserId()
+
+        if (userId <= 0) {
+            showGamificationFallback()
+            return
         }
 
-        // Click listeners
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.api.getUserGamification(userId)
+                val data = response.gamification
+
+                tvCurrentStreak.text = "Current streak: ${data.current_streak} day(s)"
+                tvLongestStreak.text = "Longest streak: ${data.longest_streak} day(s)"
+                tvLastStreakDate.text = "Last completed day: ${data.last_streak_date ?: "--"}"
+                tvPoints.text = "Points: ${data.points}"
+                tvLevel.text = "Level: ${data.level}"
+            } catch (e: Exception) {
+                showGamificationFallback()
+            }
+        }
+    }
+
+    private fun showGamificationFallback() {
+        tvCurrentStreak.text = "Current streak: --"
+        tvLongestStreak.text = "Longest streak: --"
+        tvLastStreakDate.text = "Last completed day: --"
+        tvPoints.text = "Points: --"
+        tvLevel.text = "Level: --"
+    }
+
+    private fun setupClickListeners() {
         btnAddCommitment.setOnClickListener {
-            // TODO: Open commitment dialog
+            // Add your commitment feature later
         }
 
         btnSetupChallenge.setOnClickListener {
@@ -91,9 +168,11 @@ class DashboardActivity : AppCompatActivity() {
         onboardingCard.setOnClickListener {
             startActivity(Intent(this, OnboardingActivity::class.java))
         }
+    }
 
-        // Bottom Navigation
+    private fun setupBottomNavigation() {
         bottomNavigation.selectedItemId = R.id.nav_dashboard
+
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
@@ -115,24 +194,6 @@ class DashboardActivity : AppCompatActivity() {
 
                 else -> false
             }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-        val tvChallengeTitle = findViewById<TextView>(R.id.tvChallengeTitle)
-        val tvChallengeSubtitle = findViewById<TextView>(R.id.tvChallengeSubtitle)
-        val btnSetupChallenge = findViewById<Button>(R.id.btnSetupChallenge)
-
-        if (stateManager.isChallengeActive()) {
-            tvChallengeTitle.text = "Challenge active"
-            tvChallengeSubtitle.text = "Complete to unlock"
-            btnSetupChallenge.visibility = android.view.View.GONE
-        } else {
-            tvChallengeTitle.text = "Challenge preferences"
-            tvChallengeSubtitle.text = buildChallengeSummary()
-            btnSetupChallenge.visibility = android.view.View.VISIBLE
         }
     }
 

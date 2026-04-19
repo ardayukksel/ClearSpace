@@ -26,7 +26,9 @@ data class EndSessionRequest(
 data class EndSessionResponse(
     val success: Boolean,
     val message: String,
-    val rows_affected: Int
+    val rows_affected: Int,
+    val streak: StreakDto?,
+    val rewards: SessionRewardsDto?
 )
 
 data class UpdateSessionDurationRequest(
@@ -60,15 +62,47 @@ data class StreakDto(
     val last_streak_date: String?
 )
 
+data class RewardsDto(
+    val challenge_points: Int,
+    val streak_bonus: Int,
+    val total_added: Int,
+    val total_points: Int,
+    val level: Int
+)
+
+data class SessionRewardsDto(
+    val session_points: Int,
+    val streak_bonus: Int,
+    val total_added: Int,
+    val total_points: Int,
+    val level: Int
+)
+
 data class CompleteChallengeResponse(
     val success: Boolean,
     val message: String,
-    val streak: StreakDto?
+    val streak: StreakDto?,
+    val rewards: RewardsDto?
+)
+
+data class GamificationDto(
+    val user_id: Int,
+    val user_name: String,
+    val points: Int,
+    val level: Int,
+    val current_streak: Int,
+    val longest_streak: Int,
+    val last_streak_date: String?
 )
 
 data class GetUserStreakResponse(
     val success: Boolean,
     val streak: StreakDto
+)
+
+data class GetUserGamificationResponse(
+    val success: Boolean,
+    val gamification: GamificationDto
 )
 
 data class GenericResponse(

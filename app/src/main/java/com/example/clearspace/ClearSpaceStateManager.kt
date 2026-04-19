@@ -13,10 +13,16 @@ class ClearSpaceStateManager(context: Context) {
         private const val KEY_CHALLENGE_RANDOM = "challenge_random"
         private const val KEY_SELECTED_CHALLENGE = "selected_challenge"
 
-        // Onboarding keys
         private const val KEY_SELECTED_AGE = "selected_age"
         private const val KEY_USER_GOAL = "user_goal"
         private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
+
+        private const val KEY_LOGGED_IN_USER_ID = "logged_in_user_id"
+        private const val KEY_LOGGED_IN_EMAIL = "logged_in_email"
+        private const val KEY_LOGGED_IN_USER_NAME = "logged_in_user_name"
+
+        private const val KEY_USER_NAME_LEGACY = "userName"
+        private const val KEY_USER_EMAIL_LEGACY = "userEmail"
     }
 
     private val prefs: SharedPreferences =
@@ -98,24 +104,34 @@ class ClearSpaceStateManager(context: Context) {
 
     fun saveLoggedInUser(userId: Int, email: String, userName: String) {
         prefs.edit()
-            .putInt("logged_in_user_id", userId)
-            .putString("logged_in_email", email)
-            .putString("logged_in_user_name", userName)
-            .putString("userName", userName)
-            .putString("userEmail", email)
+            .putInt(KEY_LOGGED_IN_USER_ID, userId)
+            .putString(KEY_LOGGED_IN_EMAIL, email)
+            .putString(KEY_LOGGED_IN_USER_NAME, userName)
+            .putString(KEY_USER_NAME_LEGACY, userName)
+            .putString(KEY_USER_EMAIL_LEGACY, email)
             .apply()
     }
 
     fun getLoggedInUserId(): Int {
-        return prefs.getInt("logged_in_user_id", 1)
+        return prefs.getInt(KEY_LOGGED_IN_USER_ID, -1)
     }
 
     fun getLoggedInEmail(): String {
-        return prefs.getString("logged_in_email", "") ?: ""
+        return prefs.getString(KEY_LOGGED_IN_EMAIL, "") ?: ""
     }
 
     fun getLoggedInUserName(): String {
-        return prefs.getString("logged_in_user_name", "Alex") ?: "Alex"
+        return prefs.getString(KEY_LOGGED_IN_USER_NAME, "User") ?: "User"
+    }
+
+    fun logoutUser() {
+        prefs.edit()
+            .remove(KEY_LOGGED_IN_USER_ID)
+            .remove(KEY_LOGGED_IN_EMAIL)
+            .remove(KEY_LOGGED_IN_USER_NAME)
+            .remove(KEY_USER_NAME_LEGACY)
+            .remove(KEY_USER_EMAIL_LEGACY)
+            .apply()
     }
 
     // ==================== Onboarding ====================
@@ -150,27 +166,17 @@ class ClearSpaceStateManager(context: Context) {
         return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
     }
 
-    // ==================== Challenge Preferences (Single Selection) ====================
+    // ==================== Challenge Preferences ====================
 
-    /**
-     * Save the selected challenge type (single selection only)
-     * @param challengeType One of: "breathing", "tap", "hold", "math", "random"
-     */
     fun saveSelectedChallenge(challengeType: String) {
         prefs.edit()
             .putString(KEY_SELECTED_CHALLENGE, challengeType)
             .apply()
     }
 
-    /**
-     * Get the currently selected challenge type
-     * @return The selected challenge type, defaults to "breathing"
-     */
     fun getSelectedChallenge(): String {
         return prefs.getString(KEY_SELECTED_CHALLENGE, "breathing") ?: "breathing"
     }
-
-    // Legacy methods for backward compatibility
 
     fun saveChallengePreferences(
         breathing: Boolean,
@@ -179,35 +185,42 @@ class ClearSpaceStateManager(context: Context) {
         math: Boolean,
         random: Boolean
     ) {
-        // Convert to single selection - pick the first enabled one
+        prefs.edit()
+            .putBoolean(KEY_CHALLENGE_BREATHING, breathing)
+            .putBoolean(KEY_CHALLENGE_TAP, tap)
+            .putBoolean(KEY_CHALLENGE_HOLD, hold)
+            .putBoolean(KEY_CHALLENGE_MATH, math)
+            .putBoolean(KEY_CHALLENGE_RANDOM, random)
+            .apply()
+
         val selected = when {
+            random -> "random"
             breathing -> "breathing"
             tap -> "tap"
             hold -> "hold"
             math -> "math"
-            random -> "random"
             else -> "breathing"
         }
+
         saveSelectedChallenge(selected)
     }
-
     fun isBreathingChallengeEnabled(): Boolean {
-        return getSelectedChallenge() == "breathing"
+        return prefs.getBoolean(KEY_CHALLENGE_BREATHING, false) || getSelectedChallenge() == "breathing"
     }
 
     fun isTapChallengeEnabled(): Boolean {
-        return getSelectedChallenge() == "tap"
+        return prefs.getBoolean(KEY_CHALLENGE_TAP, false) || getSelectedChallenge() == "tap"
     }
 
     fun isHoldChallengeEnabled(): Boolean {
-        return getSelectedChallenge() == "hold"
+        return prefs.getBoolean(KEY_CHALLENGE_HOLD, false) || getSelectedChallenge() == "hold"
     }
 
     fun isMathChallengeEnabled(): Boolean {
-        return getSelectedChallenge() == "math"
+        return prefs.getBoolean(KEY_CHALLENGE_MATH, false) || getSelectedChallenge() == "math"
     }
 
     fun isRandomChallengeEnabled(): Boolean {
-        return getSelectedChallenge() == "random"
+        return prefs.getBoolean(KEY_CHALLENGE_RANDOM, false) || getSelectedChallenge() == "random"
     }
 }

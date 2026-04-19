@@ -70,7 +70,7 @@ SELECT *
 FROM sessions
 ORDER BY session_id DESC;
 
-SELECT user_id, user_name, current_streak, longest_streak, last_streak_date
+SELECT user_id, user_name, current_streak, longest_streak, last_streak_date, points, level
 FROM users
 ORDER BY user_id;
 

@@ -27,4 +27,7 @@ interface ApiService {
 
     @GET("users/{userId}/streak")
     suspend fun getUserStreak(@Path("userId") userId: Int): GetUserStreakResponse
+
+    @GET("users/{userId}/gamification")
+    suspend fun getUserGamification(@Path("userId") userId: Int): GetUserGamificationResponse
 }

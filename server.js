@@ -40,6 +40,49 @@ function formatDateOnly(dateValue) {
   return d.toISOString().split("T")[0];
 }
 
+function getStreakBonus(currentStreak) {
+  if (currentStreak <= 1) return 5;
+  if (currentStreak === 2) return 10;
+  return 15;
+}
+
+function updateUserPointsAndLevel(userId, pointsToAdd, callback) {
+  const getSql = `
+    SELECT points, level
+    FROM users
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(getSql, [userId], (err, results) => {
+    if (err) return callback(err);
+
+    if (results.length === 0) {
+      return callback(new Error("User not found"));
+    }
+
+    const currentPoints = results[0].points || 0;
+    const newPoints = currentPoints + pointsToAdd;
+    const newLevel = Math.floor(newPoints / 50) + 1;
+
+    const updateSql = `
+      UPDATE users
+      SET points = ?, level = ?
+      WHERE user_id = ?
+    `;
+
+    db.query(updateSql, [newPoints, newLevel, userId], (updateErr) => {
+      if (updateErr) return callback(updateErr);
+
+      callback(null, {
+        points: newPoints,
+        level: newLevel,
+        points_added: pointsToAdd
+      });
+    });
+  });
+}
+
 function updateUserStreak(userId, callback) {
   const sql = `
     SELECT user_id, current_streak, longest_streak, last_streak_date
@@ -62,13 +105,13 @@ function updateUserStreak(userId, callback) {
     let newCurrentStreak = user.current_streak || 0;
     let newLongestStreak = user.longest_streak || 0;
 
-    // already counted today -> do not increment again
     if (lastDate === todayStr) {
       return callback(null, {
         user_id: Number(userId),
         current_streak: newCurrentStreak,
         longest_streak: newLongestStreak,
-        last_streak_date: todayStr
+        last_streak_date: todayStr,
+        already_counted_today: true
       });
     }
 
@@ -106,7 +149,8 @@ function updateUserStreak(userId, callback) {
           user_id: Number(userId),
           current_streak: newCurrentStreak,
           longest_streak: newLongestStreak,
-          last_streak_date: todayStr
+          last_streak_date: todayStr,
+          already_counted_today: false
         });
       }
     );
@@ -155,8 +199,8 @@ app.post("/users/find-or-create", (req, res) => {
     const derivedName = email.split("@")[0];
 
     const insertSql = `
-      INSERT INTO users (user_name, email, password_hash, session_limit_minutes, daily_limit_minutes)
-      VALUES (?, ?, ?, 15, 60)
+      INSERT INTO users (user_name, email, password_hash, session_limit_minutes, daily_limit_minutes, points, level)
+      VALUES (?, ?, ?, 15, 60, 0, 1)
     `;
 
     db.query(insertSql, [derivedName, email, password], (insertErr, insertResult) => {
@@ -245,7 +289,8 @@ app.post("/sessions/end", (req, res) => {
         success: true,
         message: "No active session found to end",
         rows_affected: 0,
-        streak: null
+        streak: null,
+        rewards: null
       });
     }
 
@@ -254,11 +299,35 @@ app.post("/sessions/end", (req, res) => {
         return res.status(500).json({ success: false, error: streakErr.message });
       }
 
-      res.json({
-        success: true,
-        message: "Session ended successfully and streak updated",
-        rows_affected: result.affectedRows,
-        streak: streakData
+      let totalPointsToAdd = 0;
+      let streakBonus = 0;
+      const sessionPoints = 10;
+
+      if (!streakData.already_counted_today) {
+        streakBonus = getStreakBonus(streakData.current_streak);
+        totalPointsToAdd = sessionPoints + streakBonus;
+      } else {
+        totalPointsToAdd = sessionPoints;
+      }
+
+      updateUserPointsAndLevel(user_id, totalPointsToAdd, (pointsErr, rewardsData) => {
+        if (pointsErr) {
+          return res.status(500).json({ success: false, error: pointsErr.message });
+        }
+
+        res.json({
+          success: true,
+          message: "Session ended successfully and rewards updated",
+          rows_affected: result.affectedRows,
+          streak: streakData,
+          rewards: {
+            session_points: sessionPoints,
+            streak_bonus: streakBonus,
+            total_added: totalPointsToAdd,
+            total_points: rewardsData.points,
+            level: rewardsData.level
+          }
+        });
       });
     });
   });
@@ -293,25 +362,50 @@ app.post("/user-challenges/complete", (req, res) => {
       return res.status(500).json({ success: false, error: err.message });
     }
 
-    if (result === "completed") {
-      updateUserStreak(user_id, (streakErr, streakData) => {
-        if (streakErr) {
-          return res.status(500).json({ success: false, error: streakErr.message });
+    if (result !== "completed") {
+      return res.json({
+        success: true,
+        message: "Challenge recorded successfully",
+        streak: null,
+        rewards: null
+      });
+    }
+
+    updateUserStreak(user_id, (streakErr, streakData) => {
+      if (streakErr) {
+        return res.status(500).json({ success: false, error: streakErr.message });
+      }
+
+      let totalPointsToAdd = 0;
+      let streakBonus = 0;
+      const challengePoints = 10;
+
+      if (!streakData.already_counted_today) {
+        streakBonus = getStreakBonus(streakData.current_streak);
+        totalPointsToAdd = challengePoints + streakBonus;
+      } else {
+        totalPointsToAdd = challengePoints;
+      }
+
+      updateUserPointsAndLevel(user_id, totalPointsToAdd, (pointsErr, rewardsData) => {
+        if (pointsErr) {
+          return res.status(500).json({ success: false, error: pointsErr.message });
         }
 
         res.json({
           success: true,
           message: "Challenge completed successfully",
-          streak: streakData
+          streak: streakData,
+          rewards: {
+            challenge_points: challengePoints,
+            streak_bonus: streakBonus,
+            total_added: totalPointsToAdd,
+            total_points: rewardsData.points,
+            level: rewardsData.level
+          }
         });
       });
-    } else {
-      res.json({
-        success: true,
-        message: "Challenge recorded successfully",
-        streak: null
-      });
-    }
+    });
   });
 });
 
@@ -343,6 +437,42 @@ app.get("/users/:userId/streak", (req, res) => {
         current_streak: streak.current_streak,
         longest_streak: streak.longest_streak,
         last_streak_date: formatDateOnly(streak.last_streak_date)
+      }
+    });
+  });
+});
+
+app.get("/users/:userId/gamification", (req, res) => {
+  const userId = req.params.userId;
+
+  const sql = `
+    SELECT user_id, user_name, points, level, current_streak, longest_streak, last_streak_date
+    FROM users
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [userId], (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const user = results[0];
+
+    res.json({
+      success: true,
+      gamification: {
+        user_id: user.user_id,
+        user_name: user.user_name,
+        points: user.points,
+        level: user.level,
+        current_streak: user.current_streak,
+        longest_streak: user.longest_streak,
+        last_streak_date: formatDateOnly(user.last_streak_date)
       }
     });
   });
