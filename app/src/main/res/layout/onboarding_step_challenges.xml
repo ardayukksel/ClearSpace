@@ -3,16 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
-    android:scrollbars="none">
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="24dp">
+        android:padding="24dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,7 +29,6 @@
             android:textColor="@color/textSecondary"
             android:lineSpacingMultiplier="1.4" />
 
-        <!-- Breathing Challenge -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_challenge_breathing"
             android:layout_width="match_parent"
@@ -82,20 +78,10 @@
 
                 </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/check_breathing"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_challenge"
-                    android:visibility="gone"
-                    app:tint="@color/sage"
-                    android:contentDescription="Selected" />
-
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Rapid Tap Challenge -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_challenge_tap"
             android:layout_width="match_parent"
@@ -145,20 +131,10 @@
 
                 </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/check_tap"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_challenge"
-                    android:visibility="gone"
-                    app:tint="@color/sage"
-                    android:contentDescription="Selected" />
-
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Hold Still Challenge -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_challenge_hold"
             android:layout_width="match_parent"
@@ -208,20 +184,10 @@
 
                 </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/check_hold"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_challenge"
-                    android:visibility="gone"
-                    app:tint="@color/sage"
-                    android:contentDescription="Selected" />
-
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Simple Math Challenge -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_challenge_math"
             android:layout_width="match_parent"
@@ -271,20 +237,10 @@
 
                 </LinearLayout>
 
-                <ImageView
-                    android:id="@+id/check_math"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_challenge"
-                    android:visibility="gone"
-                    app:tint="@color/sage"
-                    android:contentDescription="Selected" />
-
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Random Challenge -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_challenge_random"
             android:layout_width="match_parent"
@@ -333,15 +289,6 @@
                         android:textColor="@color/textSecondary" />
 
                 </LinearLayout>
-
-                <ImageView
-                    android:id="@+id/check_random"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_challenge"
-                    android:visibility="gone"
-                    app:tint="@color/sage"
-                    android:contentDescription="Selected" />
 
             </LinearLayout>
 
