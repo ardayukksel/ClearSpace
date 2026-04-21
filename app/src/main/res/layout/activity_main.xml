@@ -182,8 +182,11 @@
                         android:id="@+id/rvBlockedApps"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:visibility="gone"
-                        tools:listitem="@layout/item_blocked_app" />
+                        android:clipToPadding="false"
+                        android:nestedScrollingEnabled="false"
+                        android:paddingTop="4dp"
+                        android:paddingBottom="4dp"
+                        android:visibility="gone" />
 
                     <Button
                         android:id="@+id/btnAddApp"

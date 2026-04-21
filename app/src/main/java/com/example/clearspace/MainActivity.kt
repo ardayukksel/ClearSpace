@@ -1,18 +1,24 @@
 package com.example.clearspace
 
 import android.content.Intent
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -388,21 +394,73 @@ class MainActivity : AppCompatActivity() {
         private val items: List<BlockedApp>
     ) : RecyclerView.Adapter<BlockedAppAdapter.BlockedAppViewHolder>() {
 
-        class BlockedAppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val textView: TextView = view.findViewById(android.R.id.text1)
-        }
+        class BlockedAppViewHolder(
+            val container: LinearLayout,
+            val iconView: ImageView,
+            val nameView: TextView
+        ) : RecyclerView.ViewHolder(container)
 
-        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): BlockedAppViewHolder {
-            val view = android.view.LayoutInflater.from(parent.context)
-                .inflate(android.R.layout.simple_list_item_1, parent, false)
-            return BlockedAppViewHolder(view)
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BlockedAppViewHolder {
+            val context = parent.context
+
+            val container = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(dp(context, 10), dp(context, 8), dp(context, 10), dp(context, 8))
+            }
+
+            val iconView = ImageView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(context, 44), dp(context, 44))
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                background = ContextCompat.getDrawable(context, R.drawable.bg_circle_button)
+                setPadding(dp(context, 8), dp(context, 8), dp(context, 8), dp(context, 8))
+            }
+
+            val nameView = TextView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).apply {
+                    marginStart = dp(context, 14)
+                }
+                setTextColor(ContextCompat.getColor(context, R.color.textPrimary))
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                setTypeface(typeface, Typeface.BOLD)
+                maxLines = 1
+            }
+
+            container.addView(iconView)
+            container.addView(nameView)
+
+            return BlockedAppViewHolder(container, iconView, nameView)
         }
 
         override fun onBindViewHolder(holder: BlockedAppViewHolder, position: Int) {
             val item = items[position]
-            holder.textView.text = item.appName
+            holder.nameView.text = item.appName
+
+            if (item.appIcon != null) {
+                holder.iconView.setImageDrawable(item.appIcon)
+            } else {
+                holder.iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+            }
         }
 
         override fun getItemCount(): Int = items.size
+
+        companion object {
+            private fun dp(context: android.content.Context, value: Int): Int {
+                return TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    value.toFloat(),
+                    context.resources.displayMetrics
+                ).toInt()
+            }
+        }
     }
 }
