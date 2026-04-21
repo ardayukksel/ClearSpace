@@ -8,7 +8,6 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.ViewFlipper
@@ -19,7 +18,6 @@ class OnboardingActivity : AppCompatActivity() {
 
     private lateinit var viewFlipper: ViewFlipper
     private lateinit var btnContinue: Button
-    private lateinit var btnBack: ImageButton
     private lateinit var stepIndicatorText: TextView
     private lateinit var stepAge: TextView
     private lateinit var stepGoals: TextView
@@ -34,7 +32,6 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var btnInspiration1: View
     private lateinit var btnInspiration2: View
     private lateinit var btnInspiration3: View
-    private lateinit var btnSkip: View
 
     private lateinit var cardChallengeBreathing: CardView
     private lateinit var cardChallengeTap: CardView
@@ -45,13 +42,12 @@ class OnboardingActivity : AppCompatActivity() {
     private lateinit var sharedPref: android.content.SharedPreferences
     private lateinit var stateManager: ClearSpaceStateManager
 
-    private var isBreathingSelected = true
+    // 🔥 NO DEFAULTS
+    private var isBreathingSelected = false
     private var isTapSelected = false
     private var isHoldSelected = false
     private var isMathSelected = false
     private var isRandomSelected = false
-
-    private var selectedInspirationBtn: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,14 +61,13 @@ class OnboardingActivity : AppCompatActivity() {
         setupGoalStep()
         setupChallengeStep()
         setupNavigation()
-        updateStepUI()
         loadSavedValues()
+        updateStepUI()
     }
 
     private fun initViews() {
         viewFlipper = findViewById(R.id.view_flipper_onboarding)
         btnContinue = findViewById(R.id.btn_next)
-        btnBack = findViewById(R.id.btn_back)
         stepIndicatorText = findViewById(R.id.step_indicator_text)
         stepAge = findViewById(R.id.step_age)
         stepGoals = findViewById(R.id.step_goals)
@@ -84,7 +79,6 @@ class OnboardingActivity : AppCompatActivity() {
         btnInspiration1 = findViewById(R.id.btn_inspiration_1)
         btnInspiration2 = findViewById(R.id.btn_inspiration_2)
         btnInspiration3 = findViewById(R.id.btn_inspiration_3)
-        btnSkip = findViewById(R.id.btn_skip)
 
         cardChallengeBreathing = findViewById(R.id.card_challenge_breathing)
         cardChallengeTap = findViewById(R.id.card_challenge_tap)
@@ -92,6 +86,8 @@ class OnboardingActivity : AppCompatActivity() {
         cardChallengeMath = findViewById(R.id.card_challenge_math)
         cardChallengeRandom = findViewById(R.id.card_challenge_random)
     }
+
+    // ================= AGE =================
 
     private fun setupAgeSelection() {
         val cardTeenager = findViewById<CardView>(R.id.card_teenager)
@@ -109,50 +105,53 @@ class OnboardingActivity : AppCompatActivity() {
             }
         }
 
-        selectedAge?.let { savedAge ->
-            val selectedIndex = ageValues.indexOf(savedAge)
-            if (selectedIndex != -1) {
-                highlightSelectedAgeCard(ageCards, ageCards[selectedIndex])
+        // 🔥 FIX: NO DEFAULT SELECTION
+        if (selectedAge != null) {
+            val index = ageValues.indexOf(selectedAge)
+            if (index != -1) {
+                highlightSelectedAgeCard(ageCards, ageCards[index])
+            }
+        } else {
+            ageCards.forEach {
+                it.alpha = 1.0f
+                it.cardElevation = 2f
             }
         }
     }
 
     private fun highlightSelectedAgeCard(cards: List<CardView>, selectedCard: CardView) {
-        cards.forEach { it.alpha = 0.55f }
+        cards.forEach {
+            it.alpha = 0.55f
+            it.cardElevation = 2f
+        }
         selectedCard.alpha = 1.0f
+        selectedCard.cardElevation = 8f
     }
+
+    // ================= GOALS =================
 
     private fun setupGoalStep() {
         tvCharCount.text = "${etCommitment.text?.length ?: 0}/160"
 
         etCommitment.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                val count = s?.length ?: 0
-                tvCharCount.text = "$count/160"
+                tvCharCount.text = "${s?.length ?: 0}/160"
             }
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
         btnInspiration1.setOnClickListener {
             setCommitmentText("I will be more present with the people around me.")
-            highlightInspirationBtn(btnInspiration1)
         }
 
         btnInspiration2.setOnClickListener {
             setCommitmentText("I will spend less time scrolling and more time doing.")
-            highlightInspirationBtn(btnInspiration2)
         }
 
         btnInspiration3.setOnClickListener {
             setCommitmentText("I will check my phone intentionally, not out of habit.")
-            highlightInspirationBtn(btnInspiration3)
-        }
-
-        btnSkip.setOnClickListener {
-            etCommitment.setText("")
-            goToNextStepFromGoals()
         }
     }
 
@@ -161,87 +160,51 @@ class OnboardingActivity : AppCompatActivity() {
         etCommitment.setSelection(etCommitment.text.length)
     }
 
-    private fun highlightInspirationBtn(selected: View) {
-        listOf(btnInspiration1, btnInspiration2, btnInspiration3).forEach { btn ->
-            btn.alpha = if (btn == selected) 1.0f else 0.45f
-        }
-        selectedInspirationBtn = selected
-    }
+    // ================= CHALLENGES =================
 
     private fun setupChallengeStep() {
         cardChallengeBreathing.setOnClickListener {
-            isBreathingSelected = true
-            isTapSelected = false
-            isHoldSelected = false
-            isMathSelected = false
-            isRandomSelected = false
+            isBreathingSelected = !isBreathingSelected
             updateChallengeCards()
         }
 
         cardChallengeTap.setOnClickListener {
-            isBreathingSelected = false
-            isTapSelected = true
-            isHoldSelected = false
-            isMathSelected = false
-            isRandomSelected = false
+            isTapSelected = !isTapSelected
             updateChallengeCards()
         }
 
         cardChallengeHold.setOnClickListener {
-            isBreathingSelected = false
-            isTapSelected = false
-            isHoldSelected = true
-            isMathSelected = false
-            isRandomSelected = false
+            isHoldSelected = !isHoldSelected
             updateChallengeCards()
         }
 
         cardChallengeMath.setOnClickListener {
-            isBreathingSelected = false
-            isTapSelected = false
-            isHoldSelected = false
-            isMathSelected = true
-            isRandomSelected = false
+            isMathSelected = !isMathSelected
             updateChallengeCards()
         }
 
         cardChallengeRandom.setOnClickListener {
-            isBreathingSelected = false
-            isTapSelected = false
-            isHoldSelected = false
-            isMathSelected = false
-            isRandomSelected = true
+            isRandomSelected = !isRandomSelected
             updateChallengeCards()
         }
-
-        updateChallengeCards()
     }
 
     private fun updateChallengeCards() {
-        setChallengeCardState(cardChallengeBreathing, isBreathingSelected)
-        setChallengeCardState(cardChallengeTap, isTapSelected)
-        setChallengeCardState(cardChallengeHold, isHoldSelected)
-        setChallengeCardState(cardChallengeMath, isMathSelected)
-        setChallengeCardState(cardChallengeRandom, isRandomSelected)
+        setCard(cardChallengeBreathing, isBreathingSelected)
+        setCard(cardChallengeTap, isTapSelected)
+        setCard(cardChallengeHold, isHoldSelected)
+        setCard(cardChallengeMath, isMathSelected)
+        setCard(cardChallengeRandom, isRandomSelected)
     }
 
-    private fun setChallengeCardState(card: CardView, isSelected: Boolean) {
-        card.alpha = if (isSelected) 1.0f else 0.55f
-        card.cardElevation = if (isSelected) 8f else 2f
+    private fun setCard(card: CardView, selected: Boolean) {
+        card.alpha = if (selected) 1f else 0.55f
+        card.cardElevation = if (selected) 8f else 2f
     }
+
+    // ================= NAVIGATION =================
 
     private fun setupNavigation() {
-        btnBack.setOnClickListener {
-            when (currentStep) {
-                0 -> finish()
-                1, 2, 3 -> {
-                    viewFlipper.showPrevious()
-                    currentStep--
-                    updateStepUI()
-                }
-            }
-        }
-
         btnContinue.setOnClickListener {
             when (currentStep) {
                 0 -> handleAgeStep()
@@ -253,50 +216,46 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun handleAgeStep() {
-        if (selectedAge == null) {
+        if (selectedAge.isNullOrBlank()) {
             Toast.makeText(this, "Please select your age.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        sharedPref.edit().putString("userAge", selectedAge).apply()
+        stateManager.saveSelectedAge(selectedAge!!)
         viewFlipper.showNext()
         currentStep = 1
         updateStepUI()
     }
 
     private fun handleGoalsStep() {
-        val goalText = etCommitment.text?.toString()?.trim().orEmpty()
+        val text = etCommitment.text.toString().trim()
 
-        if (goalText.isNotBlank()) {
-            sharedPref.edit().putString("userGoal", goalText).apply()
-        } else {
-            sharedPref.edit().remove("userGoal").apply()
+        if (text.isBlank()) {
+            Toast.makeText(this, "Please write your commitment.", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        viewFlipper.showNext()
-        currentStep = 2
-        updateStepUI()
-    }
-
-    private fun goToNextStepFromGoals() {
-        sharedPref.edit().remove("userGoal").apply()
+        stateManager.saveUserGoal(text)
         viewFlipper.showNext()
         currentStep = 2
         updateStepUI()
     }
 
     private fun handleChallengesStep() {
-        if (!isBreathingSelected && !isTapSelected && !isHoldSelected && !isMathSelected && !isRandomSelected) {
+        val any =
+            isBreathingSelected || isTapSelected || isHoldSelected || isMathSelected || isRandomSelected
+
+        if (!any) {
             Toast.makeText(this, "Select at least one challenge.", Toast.LENGTH_SHORT).show()
             return
         }
 
         stateManager.saveChallengePreferences(
-            breathing = isBreathingSelected,
-            tap = isTapSelected,
-            hold = isHoldSelected,
-            math = isMathSelected,
-            random = isRandomSelected
+            isBreathingSelected,
+            isTapSelected,
+            isHoldSelected,
+            isMathSelected,
+            isRandomSelected
         )
 
         viewFlipper.showNext()
@@ -305,104 +264,38 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun finishOnboarding() {
-        sharedPref.edit()
-            .putBoolean("hasCompletedOnboarding", true)
-            .apply()
-
+        stateManager.setOnboardingCompleted(true)
         startActivity(Intent(this, MainActivity::class.java))
         finish()
     }
 
+    // ================= UI =================
+
     private fun updateStepUI() {
         when (currentStep) {
-            0 -> {
-                stepIndicatorText.text = "Step 1 of 4"
-                btnContinue.text = "Continue >"
-
-                activateStep(stepAge, "① Age")
-                deactivateStep(stepGoals, "② Goals")
-                deactivateStep(stepChallenges, "③ Challenges")
-                deactivateStep(stepTutorial, "④ Tutorial")
-            }
-
-            1 -> {
-                stepIndicatorText.text = "Step 2 of 4"
-                btnContinue.text = "Continue >"
-
-                completeStep(stepAge, "Age")
-                activateStep(stepGoals, "② Goals")
-                deactivateStep(stepChallenges, "③ Challenges")
-                deactivateStep(stepTutorial, "④ Tutorial")
-            }
-
-            2 -> {
-                stepIndicatorText.text = "Step 3 of 4"
-                btnContinue.text = "Continue >"
-
-                completeStep(stepAge, "Age")
-                completeStep(stepGoals, "Goals")
-                activateStep(stepChallenges, "③ Challenges")
-                deactivateStep(stepTutorial, "④ Tutorial")
-            }
-
-            3 -> {
-                stepIndicatorText.text = "Step 4 of 4"
-                btnContinue.text = "Get Started"
-
-                completeStep(stepAge, "Age")
-                completeStep(stepGoals, "Goals")
-                completeStep(stepChallenges, "Challenges")
-                activateStep(stepTutorial, "④ Tutorial")
-            }
+            0 -> stepIndicatorText.text = "Step 1 of 4"
+            1 -> stepIndicatorText.text = "Step 2 of 4"
+            2 -> stepIndicatorText.text = "Step 3 of 4"
+            3 -> stepIndicatorText.text = "Step 4 of 4"
         }
     }
 
-    private fun activateStep(textView: TextView, label: String) {
-        textView.text = label
-        textView.setBackgroundResource(R.drawable.bg_step_active)
-        textView.setTextColor(getColor(R.color.textPrimary))
-    }
-
-    private fun deactivateStep(textView: TextView, label: String) {
-        textView.text = label
-        textView.setBackgroundResource(R.drawable.bg_step_inactive)
-        textView.setTextColor(getColor(R.color.mutedDark))
-    }
-
-    private fun completeStep(textView: TextView, label: String) {
-        textView.text = "✓ $label"
-        val drawable = getDrawable(R.drawable.bg_step_active)?.mutate() as? android.graphics.drawable.GradientDrawable
-        drawable?.setColor(android.graphics.Color.parseColor("#5A7E62"))
-        textView.background = drawable
-        textView.setTextColor(getColor(R.color.white))
-    }
+    // ================= LOAD =================
 
     private fun loadSavedValues() {
-        selectedAge = sharedPref.getString("userAge", null)
+        selectedAge = stateManager.getSelectedAge().ifBlank { null }
 
-        val savedGoal = sharedPref.getString("userGoal", "") ?: ""
-        if (savedGoal.isNotBlank()) {
-            etCommitment.setText(savedGoal)
-            etCommitment.setSelection(etCommitment.text.length)
+        val goal = stateManager.getUserGoal()
+        if (goal.isNotBlank()) {
+            etCommitment.setText(goal)
         }
 
+        // 🔥 NO DEFAULTS
         isBreathingSelected = stateManager.isBreathingChallengeEnabled()
         isTapSelected = stateManager.isTapChallengeEnabled()
         isHoldSelected = stateManager.isHoldChallengeEnabled()
         isMathSelected = stateManager.isMathChallengeEnabled()
         isRandomSelected = stateManager.isRandomChallengeEnabled()
-
-        val anySelected = isBreathingSelected || isTapSelected || isHoldSelected || isMathSelected || isRandomSelected
-        if (!anySelected) {
-            isBreathingSelected = true
-        } else {
-            when {
-                isBreathingSelected -> { isTapSelected = false; isHoldSelected = false; isMathSelected = false; isRandomSelected = false }
-                isTapSelected -> { isHoldSelected = false; isMathSelected = false; isRandomSelected = false }
-                isHoldSelected -> { isMathSelected = false; isRandomSelected = false }
-                isMathSelected -> { isRandomSelected = false }
-            }
-        }
 
         updateChallengeCards()
     }

@@ -100,8 +100,6 @@ class ClearSpaceStateManager(context: Context) {
             .commit()
     }
 
-    // ==================== User Login ====================
-
     fun saveLoggedInUser(userId: Int, email: String, userName: String) {
         prefs.edit()
             .putInt(KEY_LOGGED_IN_USER_ID, userId)
@@ -134,8 +132,6 @@ class ClearSpaceStateManager(context: Context) {
             .apply()
     }
 
-    // ==================== Onboarding ====================
-
     fun saveSelectedAge(age: String) {
         prefs.edit()
             .putString(KEY_SELECTED_AGE, age)
@@ -165,8 +161,6 @@ class ClearSpaceStateManager(context: Context) {
     fun isOnboardingCompleted(): Boolean {
         return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
     }
-
-    // ==================== Challenge Preferences ====================
 
     fun saveSelectedChallenge(challengeType: String) {
         prefs.edit()
@@ -204,23 +198,24 @@ class ClearSpaceStateManager(context: Context) {
 
         saveSelectedChallenge(selected)
     }
+
     fun isBreathingChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_BREATHING, false) || getSelectedChallenge() == "breathing"
+        return prefs.getBoolean(KEY_CHALLENGE_BREATHING, false)
     }
 
     fun isTapChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_TAP, false) || getSelectedChallenge() == "tap"
+        return prefs.getBoolean(KEY_CHALLENGE_TAP, false)
     }
 
     fun isHoldChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_HOLD, false) || getSelectedChallenge() == "hold"
+        return prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
     }
 
     fun isMathChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_MATH, false) || getSelectedChallenge() == "math"
+        return prefs.getBoolean(KEY_CHALLENGE_MATH, false)
     }
 
     fun isRandomChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_RANDOM, false) || getSelectedChallenge() == "random"
+        return prefs.getBoolean(KEY_CHALLENGE_RANDOM, false)
     }
 }

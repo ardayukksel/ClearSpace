@@ -14,7 +14,6 @@
         android:paddingTop="16dp"
         android:paddingBottom="24dp">
 
-        <!-- Title -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,7 +23,6 @@
             android:textStyle="bold"
             android:fontFamily="sans-serif-medium" />
 
-        <!-- Subtitle -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -41,7 +39,6 @@
 
         </LinearLayout>
 
-        <!-- Commitment Input Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,7 +71,6 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!-- Character count and privacy note -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -99,7 +95,6 @@
 
         </LinearLayout>
 
-        <!-- Inspiration Section -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -131,7 +126,6 @@
 
             </LinearLayout>
 
-            <!-- Inspiration Option 1 -->
             <LinearLayout
                 android:id="@+id/btn_inspiration_1"
                 android:layout_width="match_parent"
@@ -153,7 +147,6 @@
 
             </LinearLayout>
 
-            <!-- Inspiration Option 2 -->
             <LinearLayout
                 android:id="@+id/btn_inspiration_2"
                 android:layout_width="match_parent"
@@ -175,7 +168,6 @@
 
             </LinearLayout>
 
-            <!-- Inspiration Option 3 -->
             <LinearLayout
                 android:id="@+id/btn_inspiration_3"
                 android:layout_width="match_parent"
@@ -196,27 +188,6 @@
                     android:lineSpacingMultiplier="1.3" />
 
             </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- Skip Button -->
-        <LinearLayout
-            android:id="@+id/btn_skip"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:background="@drawable/bg_button_secondary"
-            android:gravity="center"
-            android:orientation="horizontal"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Skip for now >"
-                android:textSize="16sp"
-                android:textColor="@color/white" />
 
         </LinearLayout>
 
