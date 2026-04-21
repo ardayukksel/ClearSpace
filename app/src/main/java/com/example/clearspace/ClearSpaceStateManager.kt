@@ -23,6 +23,10 @@ class ClearSpaceStateManager(context: Context) {
 
         private const val KEY_USER_NAME_LEGACY = "userName"
         private const val KEY_USER_EMAIL_LEGACY = "userEmail"
+
+        private const val KEY_SESSION_ACCUMULATED_MS = "session_accumulated_ms"
+        private const val KEY_SESSION_LAST_RESUME_AT = "session_last_resume_at"
+        private const val KEY_SESSION_TARGET_ACTIVE = "session_target_active"
     }
 
     private val prefs: SharedPreferences =
@@ -93,6 +97,7 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun clearAfterUnlock(): Boolean {
+        pauseLiveSessionCountdown()
         return prefs.edit()
             .putBoolean(AppMonitorService.KEY_IS_LOCKED, false)
             .putBoolean(AppMonitorService.KEY_CHALLENGE_ACTIVE, false)
@@ -206,38 +211,79 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun isBreathingChallengeEnabled(): Boolean {
-        return if (isRandomChallengeEnabled()) {
-            false
-        } else {
-            prefs.getBoolean(KEY_CHALLENGE_BREATHING, false)
-        }
+        return if (isRandomChallengeEnabled()) false else prefs.getBoolean(KEY_CHALLENGE_BREATHING, false)
     }
 
     fun isTapChallengeEnabled(): Boolean {
-        return if (isRandomChallengeEnabled()) {
-            false
-        } else {
-            prefs.getBoolean(KEY_CHALLENGE_TAP, false)
-        }
+        return if (isRandomChallengeEnabled()) false else prefs.getBoolean(KEY_CHALLENGE_TAP, false)
     }
 
     fun isHoldChallengeEnabled(): Boolean {
-        return if (isRandomChallengeEnabled()) {
-            false
-        } else {
-            prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
-        }
+        return if (isRandomChallengeEnabled()) false else prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
     }
 
     fun isMathChallengeEnabled(): Boolean {
-        return if (isRandomChallengeEnabled()) {
-            false
-        } else {
-            prefs.getBoolean(KEY_CHALLENGE_MATH, false)
-        }
+        return if (isRandomChallengeEnabled()) false else prefs.getBoolean(KEY_CHALLENGE_MATH, false)
     }
 
     fun isRandomChallengeEnabled(): Boolean {
         return prefs.getBoolean(KEY_CHALLENGE_RANDOM, false)
+    }
+
+    fun resetLiveSessionCountdown() {
+        prefs.edit()
+            .putLong(KEY_SESSION_ACCUMULATED_MS, 0L)
+            .putLong(KEY_SESSION_LAST_RESUME_AT, 0L)
+            .putBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+            .apply()
+    }
+
+    fun resumeLiveSessionCountdown(nowMs: Long = System.currentTimeMillis()) {
+        val isAlreadyActive = prefs.getBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+        if (isAlreadyActive) return
+
+        prefs.edit()
+            .putBoolean(KEY_SESSION_TARGET_ACTIVE, true)
+            .putLong(KEY_SESSION_LAST_RESUME_AT, nowMs)
+            .apply()
+    }
+
+    fun pauseLiveSessionCountdown(nowMs: Long = System.currentTimeMillis()) {
+        val isActive = prefs.getBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+        if (!isActive) return
+
+        val lastResumeAt = prefs.getLong(KEY_SESSION_LAST_RESUME_AT, 0L)
+        val safeElapsed = if (lastResumeAt > 0L) (nowMs - lastResumeAt).coerceAtLeast(0L) else 0L
+        val currentAccumulated = prefs.getLong(KEY_SESSION_ACCUMULATED_MS, 0L)
+
+        prefs.edit()
+            .putLong(KEY_SESSION_ACCUMULATED_MS, currentAccumulated + safeElapsed)
+            .putLong(KEY_SESSION_LAST_RESUME_AT, 0L)
+            .putBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+            .apply()
+    }
+
+    fun isTargetAppSessionActive(): Boolean {
+        return prefs.getBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+    }
+
+    fun getAccumulatedSessionMs(): Long {
+        return prefs.getLong(KEY_SESSION_ACCUMULATED_MS, 0L)
+    }
+
+    fun getElapsedSessionMs(nowMs: Long = System.currentTimeMillis()): Long {
+        val accumulated = prefs.getLong(KEY_SESSION_ACCUMULATED_MS, 0L)
+        val isActive = prefs.getBoolean(KEY_SESSION_TARGET_ACTIVE, false)
+
+        if (!isActive) return accumulated
+
+        val lastResumeAt = prefs.getLong(KEY_SESSION_LAST_RESUME_AT, 0L)
+        val liveElapsed = if (lastResumeAt > 0L) (nowMs - lastResumeAt).coerceAtLeast(0L) else 0L
+        return accumulated + liveElapsed
+    }
+
+    fun getRemainingSessionMs(nowMs: Long = System.currentTimeMillis()): Long {
+        val limitMs = getTimeLimitMinutes().coerceAtLeast(1) * 60_000L
+        return (limitMs - getElapsedSessionMs(nowMs)).coerceAtLeast(0L)
     }
 }

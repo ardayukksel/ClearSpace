@@ -51,7 +51,6 @@ class AppMonitorService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val checkInterval = 250L
 
-    private var sessionStartTime = 0L
     private var lastKnownApp = ""
     private var isStoppingIntentionally = false
     private var lastChallengeLaunchAt = 0L
@@ -143,7 +142,7 @@ class AppMonitorService : Service() {
         if (!PermissionUtils.hasUsageStatsPermission(this) || !PermissionUtils.hasOverlayPermission(this)) {
             Log.w(TAG, "Required permissions missing. Cannot enforce block properly.")
             endSessionIfNeeded()
-            resetSessionOnly()
+            pauseLiveCountdown()
             stopOverlayIfNeeded()
             return
         }
@@ -198,7 +197,7 @@ class AppMonitorService : Service() {
         lastKnownApp = effectiveForegroundApp
 
         if (isLocked) {
-            resetSessionOnly()
+            pauseLiveCountdown()
 
             if (isChallengeTransitioning) {
                 stopOverlayIfNeeded()
@@ -227,34 +226,36 @@ class AppMonitorService : Service() {
         }
 
         if (effectiveForegroundApp == targetAppPackage) {
-            if (sessionStartTime == 0L) {
-                sessionStartTime = System.currentTimeMillis()
-                Log.d(TAG, "Target app session timer started for package: $targetAppPackage")
-            }
+            resumeLiveCountdown()
 
-            val currentSessionTimeMs = System.currentTimeMillis() - sessionStartTime
+            val currentSessionTimeMs = stateManager.getElapsedSessionMs()
             val limitMs = timeLimitMinutes.coerceAtLeast(1) * 60 * 1000L
 
             Log.d(TAG, "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s")
 
             if (currentSessionTimeMs >= limitMs) {
                 Log.d(TAG, "Session limit reached. Locking app and launching overlay.")
+                pauseLiveCountdown()
                 stateManager.setLockAndChallenge(locked = true, challengeActive = false)
                 clearChallengeTransitionWindow()
                 ensureOverlayShowing()
                 return
             }
         } else {
-            if (sessionStartTime != 0L) {
-                Log.d(TAG, "User left target app before lock. Resetting session timer.")
-            }
-
-            resetSessionOnly()
+            pauseLiveCountdown()
 
             if (!isLocked) {
                 stopOverlayIfNeeded()
             }
         }
+    }
+
+    private fun resumeLiveCountdown() {
+        stateManager.resumeLiveSessionCountdown()
+    }
+
+    private fun pauseLiveCountdown() {
+        stateManager.pauseLiveSessionCountdown()
     }
 
     private fun startSessionIfNeeded(targetAppName: String) {
@@ -448,17 +449,14 @@ class AppMonitorService : Service() {
         }
     }
 
-    private fun resetSessionOnly() {
-        sessionStartTime = 0L
-    }
-
     private fun resetAllTrackingState() {
-        sessionStartTime = 0L
         lastKnownApp = ""
         lastChallengeLaunchAt = 0L
         hasOpenSession = false
         lastDurationUpdateAt = 0L
         clearChallengeTransitionWindow()
+        stateManager.pauseLiveSessionCountdown()
+        stateManager.resetLiveSessionCountdown()
         stateManager.resetLockState()
     }
 
@@ -474,7 +472,7 @@ class AppMonitorService : Service() {
             resetAllTrackingState()
         } else {
             endSessionIfNeeded()
-            resetSessionOnly()
+            stateManager.pauseLiveSessionCountdown()
         }
 
         stopOverlayIfNeeded()

@@ -342,6 +342,7 @@ class MainActivity : AppCompatActivity() {
         val sessionLimit = currentSessionMinutes.coerceIn(1, 480)
 
         stateManager.saveMonitoringSettings(isBlocking, sessionLimit)
+        stateManager.resetLiveSessionCountdown()
 
         if (isBlocking) {
             val startIntent = Intent(this, AppMonitorService::class.java).apply {

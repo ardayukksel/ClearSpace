@@ -59,8 +59,14 @@ class DashboardActivity : AppCompatActivity() {
         super.onResume()
         refreshChallengeSection()
         loadSessionData()
+        startCountdownRefresh()
         loadGamificationData()
         bottomNavigation.selectedItemId = R.id.nav_dashboard
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopCountdownRefresh()
     }
 
     private fun initViews() {
@@ -92,25 +98,50 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun loadSessionData() {
-        val timeLimit = stateManager.getTimeLimitMinutes()
+        val timeLimit = stateManager.getTimeLimitMinutes().coerceAtLeast(1)
         val monitoringEnabled = stateManager.isMonitoringEnabled()
+        val limitMs = timeLimit * 60_000L
+        val elapsedMs = stateManager.getElapsedSessionMs()
+        val remainingMs = stateManager.getRemainingSessionMs()
 
-        tvLimitBadge.text = "Limit: $timeLimit min"
+        tvLimitBadge.text = "Limit: ${formatMinutesLabel(timeLimit)}"
 
         if (monitoringEnabled) {
-            tvSessionBadge.text = "Active"
+            tvSessionBadge.text = if (stateManager.isTargetAppSessionActive()) "Active" else "Paused"
             tvSessionBadge.setBackgroundResource(R.drawable.bg_session_badge_active)
         } else {
             tvSessionBadge.text = "No session"
             tvSessionBadge.setBackgroundResource(R.drawable.bg_session_badge)
         }
 
-        val totalSeconds = timeLimit * 60
-        tvTimerDisplay.text = formatTime(totalSeconds)
-        tvRemainingTime.text = "$timeLimit min"
-        tvElapsedTime.text = "0 min"
-        circularProgress.max = 100
-        circularProgress.progress = 100
+        tvTimerDisplay.text = formatTimeFromMs(remainingMs)
+        tvRemainingTime.text = formatMinutesAndSecondsShort(remainingMs)
+        tvElapsedTime.text = formatMinutesAndSecondsShort(elapsedMs)
+
+        circularProgress.max = 1000
+        val progress = if (limitMs <= 0L) {
+            0
+        } else {
+            ((remainingMs.toDouble() / limitMs.toDouble()) * 1000.0).toInt().coerceIn(0, 1000)
+        }
+        circularProgress.progress = progress
+    }
+
+    private fun startCountdownRefresh() {
+        stopCountdownRefresh()
+
+        countDownTimer = object : CountDownTimer(Long.MAX_VALUE, 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                loadSessionData()
+            }
+
+            override fun onFinish() = Unit
+        }.start()
+    }
+
+    private fun stopCountdownRefresh() {
+        countDownTimer?.cancel()
+        countDownTimer = null
     }
 
     private fun refreshChallengeSection() {
@@ -224,14 +255,36 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
-    private fun formatTime(totalSeconds: Int): String {
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
+    private fun formatTimeFromMs(ms: Long): String {
+        val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
         return String.format("%02d:%02d", minutes, seconds)
+    }
+
+    private fun formatMinutesAndSecondsShort(ms: Long): String {
+        val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+        val minutes = totalSeconds / 60L
+        val seconds = totalSeconds % 60L
+
+        return when {
+            minutes > 0L && seconds > 0L -> "${minutes}m ${seconds}s"
+            minutes > 0L -> "${minutes} min"
+            else -> "${seconds} sec"
+        }
+    }
+
+    private fun formatMinutesLabel(minutes: Int): String {
+        return when {
+            minutes == 60 -> "1 hour"
+            minutes < 60 -> "$minutes min"
+            minutes % 60 == 0 -> "${minutes / 60} hours"
+            else -> "${minutes / 60}h ${minutes % 60}m"
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        countDownTimer?.cancel()
+        stopCountdownRefresh()
     }
 }
