@@ -73,6 +73,7 @@ class MainActivity : AppCompatActivity() {
                     } else {
                         stateManager.addBlockedApp(appName, appPackage)
                         loadBlockedAppsIntoList()
+                        notifyMonitoringConfigChangedAfterLiveListUpdate()
                         Toast.makeText(this, "$appName added", Toast.LENGTH_SHORT).show()
                     }
                 } else {
@@ -138,6 +139,7 @@ class MainActivity : AppCompatActivity() {
             onDeleteClick = { app ->
                 stateManager.removeBlockedApp(app.packageName)
                 loadBlockedAppsIntoList()
+                notifyMonitoringConfigChangedAfterLiveListUpdate()
                 Toast.makeText(this, "${app.appName} removed", Toast.LENGTH_SHORT).show()
             }
         )
@@ -374,6 +376,37 @@ class MainActivity : AppCompatActivity() {
             "Settings saved! ${blockedApps.size} app(s), Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun notifyMonitoringConfigChangedAfterLiveListUpdate() {
+        val remainingApps = stateManager.getBlockedApps()
+        val isMonitoringEnabled = stateManager.isMonitoringEnabled()
+
+        if (remainingApps.isEmpty()) {
+            stateManager.saveMonitoringSettings(false, currentSessionMinutes)
+            switchBlocking.isChecked = false
+            tvBlockingStatus.text = "Inactive"
+
+            val stopIntent = Intent(this, AppMonitorService::class.java).apply {
+                action = AppMonitorService.ACTION_STOP_MONITORING
+            }
+            startService(stopIntent)
+            return
+        }
+
+        if (!isMonitoringEnabled) {
+            return
+        }
+
+        val refreshIntent = Intent(this, AppMonitorService::class.java).apply {
+            action = AppMonitorService.ACTION_START_MONITORING
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(refreshIntent)
+        } else {
+            startService(refreshIntent)
+        }
     }
 
     private fun updateBlockedAppsVisibility() {

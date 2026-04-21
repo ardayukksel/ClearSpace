@@ -152,8 +152,8 @@ class AppMonitorService : Service() {
         val isEnabled = stateManager.isMonitoringEnabled()
         val timeLimitMinutes = stateManager.getTimeLimitMinutes()
         val blockedPackages = stateManager.getBlockedAppPackages()
-        val isLocked = stateManager.isLocked()
-        val isChallengeActive = stateManager.isChallengeActive()
+        var isLocked = stateManager.isLocked()
+        var isChallengeActive = stateManager.isChallengeActive()
         val isChallengeTransitioning = isInChallengeTransitionWindow()
         val ownPackage = packageName
 
@@ -179,6 +179,28 @@ class AppMonitorService : Service() {
             stateManager.getBlockedAppName(effectiveForegroundApp)
         } else {
             ""
+        }
+
+        val removedCurrentSessionTarget =
+            currentOpenSessionPackage.isNotBlank() && currentOpenSessionPackage !in blockedPackages
+
+        if (removedCurrentSessionTarget) {
+            Log.d(
+                TAG,
+                "Currently regulated app was removed from blocked list: $currentOpenSessionPackage"
+            )
+
+            endSessionIfNeeded()
+            pauseLiveCountdown()
+
+            if (isLocked) {
+                Log.d(TAG, "Removed app was part of active lock state. Clearing lock/overlay.")
+                stateManager.resetLockState()
+                clearChallengeTransitionWindow()
+                stopOverlayIfNeeded()
+                isLocked = false
+                isChallengeActive = false
+            }
         }
 
         Log.d(
