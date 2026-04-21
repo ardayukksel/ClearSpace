@@ -179,20 +179,26 @@ class ClearSpaceStateManager(context: Context) {
         math: Boolean,
         random: Boolean
     ) {
+        val finalRandom = random
+        val finalBreathing = if (finalRandom) false else breathing
+        val finalTap = if (finalRandom) false else tap
+        val finalHold = if (finalRandom) false else hold
+        val finalMath = if (finalRandom) false else math
+
         prefs.edit()
-            .putBoolean(KEY_CHALLENGE_BREATHING, breathing)
-            .putBoolean(KEY_CHALLENGE_TAP, tap)
-            .putBoolean(KEY_CHALLENGE_HOLD, hold)
-            .putBoolean(KEY_CHALLENGE_MATH, math)
-            .putBoolean(KEY_CHALLENGE_RANDOM, random)
+            .putBoolean(KEY_CHALLENGE_BREATHING, finalBreathing)
+            .putBoolean(KEY_CHALLENGE_TAP, finalTap)
+            .putBoolean(KEY_CHALLENGE_HOLD, finalHold)
+            .putBoolean(KEY_CHALLENGE_MATH, finalMath)
+            .putBoolean(KEY_CHALLENGE_RANDOM, finalRandom)
             .apply()
 
         val selected = when {
-            random -> "random"
-            breathing -> "breathing"
-            tap -> "tap"
-            hold -> "hold"
-            math -> "math"
+            finalRandom -> "random"
+            finalBreathing -> "breathing"
+            finalTap -> "tap"
+            finalHold -> "hold"
+            finalMath -> "math"
             else -> "breathing"
         }
 
@@ -200,19 +206,35 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun isBreathingChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_BREATHING, false)
+        return if (isRandomChallengeEnabled()) {
+            false
+        } else {
+            prefs.getBoolean(KEY_CHALLENGE_BREATHING, false)
+        }
     }
 
     fun isTapChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_TAP, false)
+        return if (isRandomChallengeEnabled()) {
+            false
+        } else {
+            prefs.getBoolean(KEY_CHALLENGE_TAP, false)
+        }
     }
 
     fun isHoldChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
+        return if (isRandomChallengeEnabled()) {
+            false
+        } else {
+            prefs.getBoolean(KEY_CHALLENGE_HOLD, false)
+        }
     }
 
     fun isMathChallengeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CHALLENGE_MATH, false)
+        return if (isRandomChallengeEnabled()) {
+            false
+        } else {
+            prefs.getBoolean(KEY_CHALLENGE_MATH, false)
+        }
     }
 
     fun isRandomChallengeEnabled(): Boolean {

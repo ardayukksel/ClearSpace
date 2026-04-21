@@ -201,27 +201,26 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun buildChallengeSummary(): String {
-        val selected = mutableListOf<String>()
-
-        if (stateManager.isBreathingChallengeEnabled()) selected.add("Breathing")
-        if (stateManager.isTapChallengeEnabled()) selected.add("Rapid Tap")
-        if (stateManager.isHoldChallengeEnabled()) selected.add("Hold")
-        if (stateManager.isMathChallengeEnabled()) selected.add("Math")
-
-        val randomEnabled = stateManager.isRandomChallengeEnabled()
-
         return when {
-            randomEnabled && selected.isNotEmpty() ->
-                "Random from: ${selected.joinToString(", ")}"
+            stateManager.isRandomChallengeEnabled() -> "Random"
+            stateManager.isBreathingChallengeEnabled() &&
+                    !stateManager.isTapChallengeEnabled() &&
+                    !stateManager.isHoldChallengeEnabled() &&
+                    !stateManager.isMathChallengeEnabled() -> "Breathing"
 
-            randomEnabled ->
-                "Random from all challenge types"
+            else -> {
+                val selected = mutableListOf<String>()
+                if (stateManager.isBreathingChallengeEnabled()) selected.add("Breathing")
+                if (stateManager.isTapChallengeEnabled()) selected.add("Rapid Tap")
+                if (stateManager.isHoldChallengeEnabled()) selected.add("Hold")
+                if (stateManager.isMathChallengeEnabled()) selected.add("Math")
 
-            selected.isNotEmpty() ->
-                selected.joinToString(", ")
-
-            else ->
-                "Breathing"
+                if (selected.isNotEmpty()) {
+                    selected.joinToString(", ")
+                } else {
+                    "Breathing"
+                }
+            }
         }
     }
 

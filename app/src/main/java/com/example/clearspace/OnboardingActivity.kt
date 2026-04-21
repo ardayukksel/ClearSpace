@@ -188,30 +188,62 @@ class OnboardingActivity : AppCompatActivity() {
     private fun setupChallengeStep() {
         cardChallengeBreathing.setOnClickListener {
             isBreathingSelected = !isBreathingSelected
+            if (isBreathingSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
         }
 
         cardChallengeTap.setOnClickListener {
             isTapSelected = !isTapSelected
+            if (isTapSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
         }
 
         cardChallengeHold.setOnClickListener {
             isHoldSelected = !isHoldSelected
+            if (isHoldSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
         }
 
         cardChallengeMath.setOnClickListener {
             isMathSelected = !isMathSelected
+            if (isMathSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
         }
 
         cardChallengeRandom.setOnClickListener {
             isRandomSelected = !isRandomSelected
+            if (isRandomSelected) {
+                isBreathingSelected = false
+                isTapSelected = false
+                isHoldSelected = false
+                isMathSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
         }
 
         updateChallengeCards()
+    }
+
+    private fun normalizeChallengeSelection() {
+        if (isRandomSelected) {
+            isBreathingSelected = false
+            isTapSelected = false
+            isHoldSelected = false
+            isMathSelected = false
+        }
     }
 
     private fun updateChallengeCards() {
@@ -269,6 +301,8 @@ class OnboardingActivity : AppCompatActivity() {
     }
 
     private fun handleChallengesStep() {
+        normalizeChallengeSelection()
+
         val anySelected =
             isBreathingSelected || isTapSelected || isHoldSelected || isMathSelected || isRandomSelected
 
@@ -378,5 +412,7 @@ class OnboardingActivity : AppCompatActivity() {
         isHoldSelected = stateManager.isHoldChallengeEnabled()
         isMathSelected = stateManager.isMathChallengeEnabled()
         isRandomSelected = stateManager.isRandomChallengeEnabled()
+
+        normalizeChallengeSelection()
     }
 }

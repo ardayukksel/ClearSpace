@@ -59,6 +59,8 @@ class ChallengePreferencesActivity : AppCompatActivity() {
         isMathSelected = stateManager.isMathChallengeEnabled()
         isRandomSelected = stateManager.isRandomChallengeEnabled()
 
+        normalizeChallengeSelection()
+
         if (!isBreathingSelected && !isTapSelected && !isHoldSelected && !isMathSelected && !isRandomSelected) {
             isBreathingSelected = true
         }
@@ -70,6 +72,8 @@ class ChallengePreferencesActivity : AppCompatActivity() {
         }
 
         btnSave.setOnClickListener {
+            normalizeChallengeSelection()
+
             if (!isBreathingSelected && !isTapSelected && !isHoldSelected && !isMathSelected && !isRandomSelected) {
                 isBreathingSelected = true
             }
@@ -87,32 +91,64 @@ class ChallengePreferencesActivity : AppCompatActivity() {
 
         cardChallengeBreathing.setOnClickListener {
             isBreathingSelected = !isBreathingSelected
+            if (isBreathingSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
             updateSummary()
         }
 
         cardChallengeTap.setOnClickListener {
             isTapSelected = !isTapSelected
+            if (isTapSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
             updateSummary()
         }
 
         cardChallengeHold.setOnClickListener {
             isHoldSelected = !isHoldSelected
+            if (isHoldSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
             updateSummary()
         }
 
         cardChallengeMath.setOnClickListener {
             isMathSelected = !isMathSelected
+            if (isMathSelected) {
+                isRandomSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
             updateSummary()
         }
 
         cardChallengeRandom.setOnClickListener {
             isRandomSelected = !isRandomSelected
+            if (isRandomSelected) {
+                isBreathingSelected = false
+                isTapSelected = false
+                isHoldSelected = false
+                isMathSelected = false
+            }
+            normalizeChallengeSelection()
             updateChallengeCards()
             updateSummary()
+        }
+    }
+
+    private fun normalizeChallengeSelection() {
+        if (isRandomSelected) {
+            isBreathingSelected = false
+            isTapSelected = false
+            isHoldSelected = false
+            isMathSelected = false
         }
     }
 
@@ -138,11 +174,8 @@ class ChallengePreferencesActivity : AppCompatActivity() {
         if (isMathSelected) selected.add("Math")
 
         tvSummary.text = when {
-            isRandomSelected && selected.isNotEmpty() ->
-                "Random enabled. ClearSpace will choose from: ${selected.joinToString(", ")}"
-
             isRandomSelected ->
-                "Random enabled. ClearSpace will choose from all challenge types."
+                "Random enabled. ClearSpace will choose one challenge at random."
 
             selected.isNotEmpty() ->
                 "Selected: ${selected.joinToString(", ")}"
