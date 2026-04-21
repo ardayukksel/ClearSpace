@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -60,6 +59,9 @@ class DashboardActivity : AppCompatActivity() {
         refreshChallengeSection()
         loadSessionData()
         loadGamificationData()
+
+        // Keep nav state correct when returning from Focus
+        bottomNavigation.selectedItemId = R.id.nav_dashboard
     }
 
     private fun initViews() {
@@ -116,11 +118,11 @@ class DashboardActivity : AppCompatActivity() {
         if (stateManager.isChallengeActive()) {
             tvChallengeTitle.text = "Challenge active"
             tvChallengeSubtitle.text = "Complete to unlock"
-            btnSetupChallenge.visibility = View.GONE
+            btnSetupChallenge.visibility = android.view.View.GONE
         } else {
             tvChallengeTitle.text = "Challenge preferences"
             tvChallengeSubtitle.text = buildChallengeSummary()
-            btnSetupChallenge.visibility = View.VISIBLE
+            btnSetupChallenge.visibility = android.view.View.VISIBLE
         }
     }
 
@@ -188,7 +190,8 @@ class DashboardActivity : AppCompatActivity() {
                         putExtra(ChallengeActivity.EXTRA_MODE, ChallengeActivity.MODE_MANUAL)
                     }
                     startActivity(intent)
-                    finish()
+                    // 🔥 IMPORTANT: do NOT finish here
+                    // We want ChallengeActivity to return to this exact screen
                     true
                 }
 

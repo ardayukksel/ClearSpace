@@ -87,6 +87,18 @@ class MainActivity : AppCompatActivity() {
         updateBlockedAppsVisibility()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        loadSavedState()
+        updateBlockedAppsVisibility()
+
+        // 🔥 IMPORTANT:
+        // When returning from Focus/manual challenge, force Home to be selected again
+        // so the bold text + active indicator/purple circle are correct.
+        bottomNavigation.selectedItemId = R.id.nav_home
+    }
+
     private fun initViews() {
         tvGreeting = findViewById(R.id.tvGreeting)
         tvUserName = findViewById(R.id.tvUserName)
