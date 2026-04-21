@@ -55,9 +55,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stateManager: ClearSpaceStateManager
     private var currentSessionMinutes = 30
 
-    private var selectedAppName: String = ""
-    private var selectedAppPackage: String = ""
-
     private val blockedApps = mutableListOf<BlockedApp>()
     private lateinit var blockedAppsAdapter: BlockedAppAdapter
 
@@ -69,13 +66,15 @@ class MainActivity : AppCompatActivity() {
                 val appPackage = data?.getStringExtra(AppPickerActivity.EXTRA_APP_PACKAGE).orEmpty()
 
                 if (appName.isNotBlank() && appPackage.isNotBlank()) {
-                    selectedAppName = appName
-                    selectedAppPackage = appPackage
+                    val alreadyExists = blockedApps.any { it.packageName == appPackage }
 
-                    stateManager.saveTargetApp(appName, appPackage)
-                    loadSelectedAppIntoList()
-
-                    Toast.makeText(this, "$appName selected", Toast.LENGTH_SHORT).show()
+                    if (alreadyExists) {
+                        Toast.makeText(this, "$appName is already added", Toast.LENGTH_SHORT).show()
+                    } else {
+                        stateManager.addBlockedApp(appName, appPackage)
+                        loadBlockedAppsIntoList()
+                        Toast.makeText(this, "$appName added", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
                     Toast.makeText(this, "No app selected", Toast.LENGTH_SHORT).show()
                 }
@@ -102,10 +101,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
         loadSavedState()
         updateBlockedAppsVisibility()
-
         bottomNavigation.selectedItemId = R.id.nav_home
     }
 
@@ -136,7 +133,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        blockedAppsAdapter = BlockedAppAdapter(blockedApps)
+        blockedAppsAdapter = BlockedAppAdapter(
+            items = blockedApps,
+            onDeleteClick = { app ->
+                stateManager.removeBlockedApp(app.packageName)
+                loadBlockedAppsIntoList()
+                Toast.makeText(this, "${app.appName} removed", Toast.LENGTH_SHORT).show()
+            }
+        )
         rvBlockedApps.layoutManager = LinearLayoutManager(this)
         rvBlockedApps.adapter = blockedAppsAdapter
     }
@@ -156,9 +160,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun loadSavedState() {
-        selectedAppName = stateManager.getTargetAppName()
-        selectedAppPackage = stateManager.getTargetAppPackage()
-
         currentSessionMinutes = stateManager.getTimeLimitMinutes().coerceIn(1, 480)
         switchBlocking.isChecked = stateManager.isMonitoringEnabled()
 
@@ -172,23 +173,24 @@ class MainActivity : AppCompatActivity() {
             "Inactive"
         }
 
-        loadSelectedAppIntoList()
+        loadBlockedAppsIntoList()
     }
 
-    private fun loadSelectedAppIntoList() {
+    private fun loadBlockedAppsIntoList() {
         blockedApps.clear()
 
-        if (selectedAppName.isNotBlank() && selectedAppPackage.isNotBlank()) {
+        val savedApps = stateManager.getBlockedApps()
+        savedApps.forEach { savedApp ->
             val icon = try {
-                packageManager.getApplicationIcon(selectedAppPackage)
+                packageManager.getApplicationIcon(savedApp.packageName)
             } catch (_: Exception) {
                 null
             }
 
             blockedApps.add(
                 BlockedApp(
-                    packageName = selectedAppPackage,
-                    appName = selectedAppName,
+                    packageName = savedApp.packageName,
+                    appName = savedApp.appName,
                     appIcon = icon
                 )
             )
@@ -339,8 +341,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveSettings() {
-        if (selectedAppPackage.isBlank()) {
-            Toast.makeText(this, "Please select a target app first", Toast.LENGTH_SHORT).show()
+        if (blockedApps.isEmpty()) {
+            Toast.makeText(this, "Please add at least one app to block", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -369,7 +371,7 @@ class MainActivity : AppCompatActivity() {
 
         Toast.makeText(
             this,
-            "Settings saved! App: $selectedAppName, Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
+            "Settings saved! ${blockedApps.size} app(s), Session: ${formatTime(sessionLimit)}, Blocking: ${if (isBlocking) "ON" else "OFF"}",
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -391,13 +393,15 @@ class MainActivity : AppCompatActivity() {
     )
 
     class BlockedAppAdapter(
-        private val items: List<BlockedApp>
+        private val items: List<BlockedApp>,
+        private val onDeleteClick: (BlockedApp) -> Unit
     ) : RecyclerView.Adapter<BlockedAppAdapter.BlockedAppViewHolder>() {
 
         class BlockedAppViewHolder(
             val container: LinearLayout,
             val iconView: ImageView,
-            val nameView: TextView
+            val nameView: TextView,
+            val deleteView: ImageButton
         ) : RecyclerView.ViewHolder(container)
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BlockedAppViewHolder {
@@ -434,10 +438,21 @@ class MainActivity : AppCompatActivity() {
                 maxLines = 1
             }
 
+            val deleteView = ImageButton(context).apply {
+                layoutParams = LinearLayout.LayoutParams(dp(context, 40), dp(context, 40)).apply {
+                    marginStart = dp(context, 8)
+                }
+                background = ContextCompat.getDrawable(context, R.drawable.bg_circle_button)
+                setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+                contentDescription = "Remove app"
+                scaleType = ImageView.ScaleType.CENTER
+            }
+
             container.addView(iconView)
             container.addView(nameView)
+            container.addView(deleteView)
 
-            return BlockedAppViewHolder(container, iconView, nameView)
+            return BlockedAppViewHolder(container, iconView, nameView, deleteView)
         }
 
         override fun onBindViewHolder(holder: BlockedAppViewHolder, position: Int) {
@@ -448,6 +463,10 @@ class MainActivity : AppCompatActivity() {
                 holder.iconView.setImageDrawable(item.appIcon)
             } else {
                 holder.iconView.setImageResource(android.R.drawable.sym_def_app_icon)
+            }
+
+            holder.deleteView.setOnClickListener {
+                onDeleteClick(item)
             }
         }
 

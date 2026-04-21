@@ -53,10 +53,9 @@ class AppPickerActivity : AppCompatActivity() {
         return pm.queryIntentActivities(mainIntent, PackageManager.MATCH_ALL)
             .mapNotNull { resolveInfo ->
                 val activityInfo = resolveInfo.activityInfo ?: return@mapNotNull null
-                val packageName = activityInfo.packageName
+                val pkg = activityInfo.packageName
 
-                // Exclude ClearSpace itself
-                if (packageName == packageName()) return@mapNotNull null
+                if (pkg == applicationContext.packageName) return@mapNotNull null
 
                 val appName = resolveInfo.loadLabel(pm)?.toString()?.trim().orEmpty()
                 val icon = resolveInfo.loadIcon(pm)
@@ -65,16 +64,12 @@ class AppPickerActivity : AppCompatActivity() {
 
                 AppInfo(
                     name = appName,
-                    packageName = packageName,
+                    packageName = pkg,
                     icon = icon
                 )
             }
             .distinctBy { it.packageName }
             .sortedWith { a, b -> collator.compare(a.name, b.name) }
-    }
-
-    private fun packageName(): String {
-        return applicationContext.packageName
     }
 
     data class AppInfo(

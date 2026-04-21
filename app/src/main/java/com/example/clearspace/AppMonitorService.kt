@@ -56,6 +56,8 @@ class AppMonitorService : Service() {
     private var lastChallengeLaunchAt = 0L
 
     private var hasOpenSession = false
+    private var currentOpenSessionPackage = ""
+    private var currentOpenSessionAppName = ""
     private var lastDurationUpdateAt = 0L
     private val durationUpdateIntervalMs = 5000L
 
@@ -149,15 +151,14 @@ class AppMonitorService : Service() {
 
         val isEnabled = stateManager.isMonitoringEnabled()
         val timeLimitMinutes = stateManager.getTimeLimitMinutes()
-        val targetAppPackage = stateManager.getTargetAppPackage().orEmpty()
-        val targetAppName = stateManager.getTargetAppName().orEmpty()
+        val blockedPackages = stateManager.getBlockedAppPackages()
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
         val isChallengeTransitioning = isInChallengeTransitionWindow()
         val ownPackage = packageName
 
-        if (!isEnabled || targetAppPackage.isBlank()) {
-            Log.d(TAG, "Monitoring disabled or no target app selected.")
+        if (!isEnabled || blockedPackages.isEmpty()) {
+            Log.d(TAG, "Monitoring disabled or no blocked apps selected.")
             endSessionIfNeeded()
             resetAllTrackingState()
             stopOverlayIfNeeded()
@@ -173,25 +174,30 @@ class AppMonitorService : Service() {
             else -> ""
         }
 
+        val isBlockedAppForeground = effectiveForegroundApp in blockedPackages
+        val currentBlockedAppName = if (isBlockedAppForeground) {
+            stateManager.getBlockedAppName(effectiveForegroundApp)
+        } else {
+            ""
+        }
+
         Log.d(
             TAG,
-            "UserId=$currentUserId, Current=$currentForegroundApp, Effective=$effectiveForegroundApp, Target=$targetAppPackage, Locked=$isLocked, Challenge=$isChallengeActive, Transitioning=$isChallengeTransitioning, OpenSession=$hasOpenSession"
+            "UserId=$currentUserId, Current=$currentForegroundApp, Effective=$effectiveForegroundApp, BlockedCount=${blockedPackages.size}, Locked=$isLocked, Challenge=$isChallengeActive, Transitioning=$isChallengeTransitioning, OpenSession=$hasOpenSession"
         )
 
         if (effectiveForegroundApp.isBlank()) {
             return
         }
 
-        if (effectiveForegroundApp == targetAppPackage && !hasOpenSession) {
-            startSessionIfNeeded(targetAppName)
-        }
-
-        if (effectiveForegroundApp == targetAppPackage) {
-            updateSessionDurationIfNeeded(targetAppName)
-        }
-
-        if (effectiveForegroundApp != targetAppPackage && hasOpenSession) {
-            endSessionIfNeeded(targetAppName)
+        if (isBlockedAppForeground) {
+            switchSessionIfNeeded(
+                packageName = effectiveForegroundApp,
+                appName = currentBlockedAppName
+            )
+            updateSessionDurationIfNeeded(currentBlockedAppName)
+        } else if (hasOpenSession) {
+            endSessionIfNeeded()
         }
 
         lastKnownApp = effectiveForegroundApp
@@ -218,20 +224,20 @@ class AppMonitorService : Service() {
                 ensureOverlayShowing()
             }
 
-            if (effectiveForegroundApp != ownPackage || effectiveForegroundApp == targetAppPackage) {
+            if (effectiveForegroundApp != ownPackage || isBlockedAppForeground) {
                 ensureOverlayShowing()
             }
 
             return
         }
 
-        if (effectiveForegroundApp == targetAppPackage) {
+        if (isBlockedAppForeground) {
             resumeLiveCountdown()
 
             val currentSessionTimeMs = stateManager.getElapsedSessionMs()
             val limitMs = timeLimitMinutes.coerceAtLeast(1) * 60 * 1000L
 
-            Log.d(TAG, "Target app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s")
+            Log.d(TAG, "Blocked app active. Elapsed=${currentSessionTimeMs / 1000}s, Limit=${limitMs / 1000}s")
 
             if (currentSessionTimeMs >= limitMs) {
                 Log.d(TAG, "Session limit reached. Locking app and launching overlay.")
@@ -250,6 +256,20 @@ class AppMonitorService : Service() {
         }
     }
 
+    private fun switchSessionIfNeeded(packageName: String, appName: String) {
+        if (!hasOpenSession) {
+            startSessionIfNeeded(packageName, appName)
+            return
+        }
+
+        if (currentOpenSessionPackage == packageName) {
+            return
+        }
+
+        endSessionIfNeeded()
+        startSessionIfNeeded(packageName, appName)
+    }
+
     private fun resumeLiveCountdown() {
         stateManager.resumeLiveSessionCountdown()
     }
@@ -258,10 +278,12 @@ class AppMonitorService : Service() {
         stateManager.pauseLiveSessionCountdown()
     }
 
-    private fun startSessionIfNeeded(targetAppName: String) {
-        if (hasOpenSession || targetAppName.isBlank()) return
+    private fun startSessionIfNeeded(packageName: String, appName: String) {
+        if (hasOpenSession || appName.isBlank()) return
 
         hasOpenSession = true
+        currentOpenSessionPackage = packageName
+        currentOpenSessionAppName = appName
         lastDurationUpdateAt = 0L
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -269,19 +291,21 @@ class AppMonitorService : Service() {
                 val response = RetrofitClient.api.startSession(
                     StartSessionRequest(
                         user_id = currentUserId,
-                        regulated_app = targetAppName
+                        regulated_app = appName
                     )
                 )
                 Log.d("SESSION_API", "Session started: $response")
             } catch (e: Exception) {
                 hasOpenSession = false
+                currentOpenSessionPackage = ""
+                currentOpenSessionAppName = ""
                 Log.e("SESSION_API", "Start error: ${e.message}", e)
             }
         }
     }
 
-    private fun updateSessionDurationIfNeeded(targetAppName: String) {
-        if (!hasOpenSession || targetAppName.isBlank()) return
+    private fun updateSessionDurationIfNeeded(appName: String) {
+        if (!hasOpenSession || appName.isBlank()) return
 
         val now = System.currentTimeMillis()
         if (now - lastDurationUpdateAt < durationUpdateIntervalMs) return
@@ -293,7 +317,7 @@ class AppMonitorService : Service() {
                 val response = RetrofitClient.api.updateSessionDuration(
                     UpdateSessionDurationRequest(
                         user_id = currentUserId,
-                        regulated_app = targetAppName
+                        regulated_app = appName
                     )
                 )
                 Log.d("SESSION_API", "Duration updated: $response")
@@ -303,10 +327,14 @@ class AppMonitorService : Service() {
         }
     }
 
-    private fun endSessionIfNeeded(targetAppName: String? = stateManager.getTargetAppName()) {
-        if (!hasOpenSession || targetAppName.isNullOrBlank()) return
+    private fun endSessionIfNeeded() {
+        if (!hasOpenSession || currentOpenSessionAppName.isBlank()) return
+
+        val appNameToClose = currentOpenSessionAppName
 
         hasOpenSession = false
+        currentOpenSessionPackage = ""
+        currentOpenSessionAppName = ""
         lastDurationUpdateAt = 0L
 
         CoroutineScope(Dispatchers.IO).launch {
@@ -314,7 +342,7 @@ class AppMonitorService : Service() {
                 val response = RetrofitClient.api.endSession(
                     EndSessionRequest(
                         user_id = currentUserId,
-                        regulated_app = targetAppName
+                        regulated_app = appNameToClose
                     )
                 )
                 Log.d("SESSION_API", "Session ended: $response")
@@ -453,6 +481,8 @@ class AppMonitorService : Service() {
         lastKnownApp = ""
         lastChallengeLaunchAt = 0L
         hasOpenSession = false
+        currentOpenSessionPackage = ""
+        currentOpenSessionAppName = ""
         lastDurationUpdateAt = 0L
         clearChallengeTransitionWindow()
         stateManager.pauseLiveSessionCountdown()

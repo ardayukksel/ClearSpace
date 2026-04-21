@@ -27,7 +27,15 @@ class ClearSpaceStateManager(context: Context) {
         private const val KEY_SESSION_ACCUMULATED_MS = "session_accumulated_ms"
         private const val KEY_SESSION_LAST_RESUME_AT = "session_last_resume_at"
         private const val KEY_SESSION_TARGET_ACTIVE = "session_target_active"
+
+        private const val KEY_BLOCKED_APPS = "blocked_apps"
+        private const val APP_ENTRY_SEPARATOR = "|||"
     }
+
+    data class BlockedAppEntry(
+        val appName: String,
+        val packageName: String
+    )
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(AppMonitorService.PREFS_NAME, Context.MODE_PRIVATE)
@@ -41,10 +49,14 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun getTargetAppName(): String {
+        val firstBlocked = getBlockedApps().firstOrNull()
+        if (firstBlocked != null) return firstBlocked.appName
         return prefs.getString(AppMonitorService.KEY_TARGET_APP_NAME, "") ?: ""
     }
 
     fun getTargetAppPackage(): String {
+        val firstBlocked = getBlockedApps().firstOrNull()
+        if (firstBlocked != null) return firstBlocked.packageName
         return prefs.getString(AppMonitorService.KEY_TARGET_APP_PACKAGE, "") ?: ""
     }
 
@@ -57,10 +69,93 @@ class ClearSpaceStateManager(context: Context) {
     }
 
     fun saveTargetApp(appName: String, packageName: String) {
+        clearBlockedApps()
+        addBlockedApp(appName, packageName)
+
         prefs.edit()
             .putString(AppMonitorService.KEY_TARGET_APP_NAME, appName)
             .putString(AppMonitorService.KEY_TARGET_APP_PACKAGE, packageName)
             .apply()
+    }
+
+    fun addBlockedApp(appName: String, packageName: String) {
+        val currentEntries = prefs.getStringSet(KEY_BLOCKED_APPS, emptySet()).orEmpty().toMutableSet()
+        currentEntries.removeAll { it.substringBefore(APP_ENTRY_SEPARATOR) == packageName }
+        currentEntries.add("$packageName$APP_ENTRY_SEPARATOR$appName")
+
+        prefs.edit()
+            .putStringSet(KEY_BLOCKED_APPS, currentEntries)
+            .putString(AppMonitorService.KEY_TARGET_APP_NAME, appName)
+            .putString(AppMonitorService.KEY_TARGET_APP_PACKAGE, packageName)
+            .apply()
+    }
+
+    fun removeBlockedApp(packageName: String) {
+        val currentEntries = prefs.getStringSet(KEY_BLOCKED_APPS, emptySet()).orEmpty().toMutableSet()
+        currentEntries.removeAll { it.substringBefore(APP_ENTRY_SEPARATOR) == packageName }
+
+        val editor = prefs.edit().putStringSet(KEY_BLOCKED_APPS, currentEntries)
+
+        val remainingApps = currentEntries.mapNotNull { decodeBlockedAppEntry(it) }.sortedBy { it.appName.lowercase() }
+        if (remainingApps.isNotEmpty()) {
+            editor.putString(AppMonitorService.KEY_TARGET_APP_NAME, remainingApps.first().appName)
+            editor.putString(AppMonitorService.KEY_TARGET_APP_PACKAGE, remainingApps.first().packageName)
+        } else {
+            editor.remove(AppMonitorService.KEY_TARGET_APP_NAME)
+            editor.remove(AppMonitorService.KEY_TARGET_APP_PACKAGE)
+        }
+
+        editor.apply()
+    }
+
+    fun clearBlockedApps() {
+        prefs.edit()
+            .remove(KEY_BLOCKED_APPS)
+            .remove(AppMonitorService.KEY_TARGET_APP_NAME)
+            .remove(AppMonitorService.KEY_TARGET_APP_PACKAGE)
+            .apply()
+    }
+
+    fun getBlockedApps(): List<BlockedAppEntry> {
+        val entries = prefs.getStringSet(KEY_BLOCKED_APPS, emptySet()).orEmpty()
+
+        val decoded = entries.mapNotNull { decodeBlockedAppEntry(it) }
+            .distinctBy { it.packageName }
+            .sortedBy { it.appName.lowercase() }
+            .toMutableList()
+
+        if (decoded.isEmpty()) {
+            val legacyName = prefs.getString(AppMonitorService.KEY_TARGET_APP_NAME, "") ?: ""
+            val legacyPackage = prefs.getString(AppMonitorService.KEY_TARGET_APP_PACKAGE, "") ?: ""
+            if (legacyName.isNotBlank() && legacyPackage.isNotBlank()) {
+                decoded.add(BlockedAppEntry(legacyName, legacyPackage))
+            }
+        }
+
+        return decoded
+    }
+
+    fun getBlockedAppPackages(): Set<String> {
+        return getBlockedApps().map { it.packageName }.toSet()
+    }
+
+    fun getBlockedAppName(packageName: String): String {
+        return getBlockedApps().firstOrNull { it.packageName == packageName }?.appName.orEmpty()
+    }
+
+    private fun decodeBlockedAppEntry(raw: String): BlockedAppEntry? {
+        val parts = raw.split(APP_ENTRY_SEPARATOR)
+        if (parts.size < 2) return null
+
+        val packageName = parts[0].trim()
+        val appName = parts.subList(1, parts.size).joinToString(APP_ENTRY_SEPARATOR).trim()
+
+        if (packageName.isBlank() || appName.isBlank()) return null
+
+        return BlockedAppEntry(
+            appName = appName,
+            packageName = packageName
+        )
     }
 
     fun saveMonitoringSettings(enabled: Boolean, timeLimitMinutes: Int) {

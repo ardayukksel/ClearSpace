@@ -21,7 +21,6 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Header Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,7 +71,6 @@
                     android:src="@drawable/ic_settings" />
             </LinearLayout>
 
-            <!-- Blocking Status Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -137,7 +135,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Apps to Block Section -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -201,7 +198,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Session Limit Section -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -216,7 +212,6 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <!-- Session Limit Header -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -260,7 +255,6 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
-                    <!-- Slider -->
                     <com.google.android.material.slider.Slider
                         android:id="@+id/sliderSessionLimit"
                         android:layout_width="match_parent"
@@ -276,7 +270,6 @@
                         app:trackColorActive="@color/b600"
                         app:trackColorInactive="@color/muted2" />
 
-                    <!-- Slider Labels -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -298,7 +291,6 @@
                             android:textSize="12sp" />
                     </LinearLayout>
 
-                    <!-- Preset Chips Row 1 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -365,7 +357,6 @@
                             android:textSize="13sp" />
                     </LinearLayout>
 
-                    <!-- Preset Chips Row 2 -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -435,7 +426,6 @@
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- Save Button -->
             <Button
                 android:id="@+id/btnSaveSettings"
                 android:layout_width="match_parent"
@@ -450,7 +440,6 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
