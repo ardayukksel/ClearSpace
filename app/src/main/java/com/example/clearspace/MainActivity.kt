@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.google.android.material.slider.Slider
 import java.util.Calendar
 
@@ -30,7 +29,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSessionDescription: TextView
     private lateinit var switchBlocking: SwitchCompat
     private lateinit var sliderSessionLimit: Slider
-    private lateinit var chipGroupTime: ChipGroup
     private lateinit var btnAddApp: Button
     private lateinit var btnSaveSettings: Button
     private lateinit var btnNotification: ImageButton
@@ -38,6 +36,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var emptyAppsContainer: LinearLayout
     private lateinit var rvBlockedApps: RecyclerView
+
+    private lateinit var chip5min: Chip
+    private lateinit var chip15min: Chip
+    private lateinit var chip30min: Chip
+    private lateinit var chip1hour: Chip
+    private lateinit var chip2hours: Chip
+    private lateinit var chip3hours: Chip
+    private lateinit var chip5hours: Chip
+    private lateinit var chip8hours: Chip
 
     private lateinit var stateManager: ClearSpaceStateManager
     private var currentSessionMinutes = 30
@@ -93,9 +100,6 @@ class MainActivity : AppCompatActivity() {
         loadSavedState()
         updateBlockedAppsVisibility()
 
-        // 🔥 IMPORTANT:
-        // When returning from Focus/manual challenge, force Home to be selected again
-        // so the bold text + active indicator/purple circle are correct.
         bottomNavigation.selectedItemId = R.id.nav_home
     }
 
@@ -107,7 +111,6 @@ class MainActivity : AppCompatActivity() {
         tvSessionDescription = findViewById(R.id.tvSessionDescription)
         switchBlocking = findViewById(R.id.switchBlocking)
         sliderSessionLimit = findViewById(R.id.sliderSessionLimit)
-        chipGroupTime = findViewById(R.id.chipGroupTime)
         btnAddApp = findViewById(R.id.btnAddApp)
         btnSaveSettings = findViewById(R.id.btnSaveSettings)
         btnNotification = findViewById(R.id.btnNotification)
@@ -115,6 +118,15 @@ class MainActivity : AppCompatActivity() {
         bottomNavigation = findViewById(R.id.bottomNavigation)
         emptyAppsContainer = findViewById(R.id.emptyAppsContainer)
         rvBlockedApps = findViewById(R.id.rvBlockedApps)
+
+        chip5min = findViewById(R.id.chip5min)
+        chip15min = findViewById(R.id.chip15min)
+        chip30min = findViewById(R.id.chip30min)
+        chip1hour = findViewById(R.id.chip1hour)
+        chip2hours = findViewById(R.id.chip2hours)
+        chip3hours = findViewById(R.id.chip3hours)
+        chip5hours = findViewById(R.id.chip5hours)
+        chip8hours = findViewById(R.id.chip8hours)
     }
 
     private fun setupRecyclerView() {
@@ -141,10 +153,10 @@ class MainActivity : AppCompatActivity() {
         selectedAppName = stateManager.getTargetAppName()
         selectedAppPackage = stateManager.getTargetAppPackage()
 
-        currentSessionMinutes = stateManager.getTimeLimitMinutes().coerceAtLeast(1)
+        currentSessionMinutes = stateManager.getTimeLimitMinutes().coerceIn(1, 480)
         switchBlocking.isChecked = stateManager.isMonitoringEnabled()
 
-        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(1f, 600f)
+        sliderSessionLimit.value = currentSessionMinutes.toFloat()
         updateSessionTimeDisplay()
         updateChipSelection()
 
@@ -192,12 +204,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSlider() {
         sliderSessionLimit.valueFrom = 1f
-        sliderSessionLimit.valueTo = 600f
+        sliderSessionLimit.valueTo = 480f
         sliderSessionLimit.stepSize = 1f
 
         sliderSessionLimit.addOnChangeListener { _, value, fromUser ->
             if (fromUser) {
-                currentSessionMinutes = value.toInt().coerceAtLeast(1)
+                currentSessionMinutes = value.toInt().coerceIn(1, 480)
                 updateSessionTimeDisplay()
                 updateChipSelection()
             }
@@ -205,41 +217,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupChips() {
-        val chip15min: Chip = findViewById(R.id.chip15min)
-        val chip30min: Chip = findViewById(R.id.chip30min)
-        val chip1hour: Chip = findViewById(R.id.chip1hour)
-        val chip2hours: Chip = findViewById(R.id.chip2hours)
-        val chip5hours: Chip = findViewById(R.id.chip5hours)
-
+        chip5min.setOnClickListener { setSessionTime(5) }
         chip15min.setOnClickListener { setSessionTime(15) }
         chip30min.setOnClickListener { setSessionTime(30) }
         chip1hour.setOnClickListener { setSessionTime(60) }
         chip2hours.setOnClickListener { setSessionTime(120) }
+        chip3hours.setOnClickListener { setSessionTime(180) }
         chip5hours.setOnClickListener { setSessionTime(300) }
-
-        chipGroupTime.setOnCheckedStateChangeListener { _, checkedIds ->
-            if (checkedIds.isNotEmpty()) {
-                val chipId = checkedIds[0]
-                val minutes = when (chipId) {
-                    R.id.chip15min -> 15
-                    R.id.chip30min -> 30
-                    R.id.chip1hour -> 60
-                    R.id.chip2hours -> 120
-                    R.id.chip5hours -> 300
-                    else -> 30
-                }
-
-                if (currentSessionMinutes != minutes) {
-                    setSessionTime(minutes)
-                }
-            }
-        }
+        chip8hours.setOnClickListener { setSessionTime(480) }
     }
 
     private fun setSessionTime(minutes: Int) {
-        currentSessionMinutes = minutes.coerceAtLeast(1)
-        sliderSessionLimit.value = currentSessionMinutes.toFloat().coerceIn(1f, 600f)
+        currentSessionMinutes = minutes.coerceIn(1, 480)
+        sliderSessionLimit.value = currentSessionMinutes.toFloat()
         updateSessionTimeDisplay()
+        updateChipSelection()
     }
 
     private fun updateSessionTimeDisplay() {
@@ -258,29 +250,37 @@ class MainActivity : AppCompatActivity() {
 
     private fun getSessionDescription(minutes: Int): String {
         return when {
-            minutes <= 5 -> "Quick focus"
             minutes <= 15 -> "Quick focus"
             minutes <= 30 -> "Balanced focus"
             minutes <= 60 -> "Deep work"
-            minutes <= 120 -> "Extended focus"
+            minutes <= 180 -> "Extended focus"
             else -> "Marathon session"
         }
     }
 
-    private fun updateChipSelection() {
-        val chipId = when (currentSessionMinutes) {
-            15 -> R.id.chip15min
-            30 -> R.id.chip30min
-            60 -> R.id.chip1hour
-            120 -> R.id.chip2hours
-            300 -> R.id.chip5hours
-            else -> -1
-        }
+    private fun clearAllChipSelections() {
+        chip5min.isChecked = false
+        chip15min.isChecked = false
+        chip30min.isChecked = false
+        chip1hour.isChecked = false
+        chip2hours.isChecked = false
+        chip3hours.isChecked = false
+        chip5hours.isChecked = false
+        chip8hours.isChecked = false
+    }
 
-        if (chipId != -1) {
-            chipGroupTime.check(chipId)
-        } else {
-            chipGroupTime.clearCheck()
+    private fun updateChipSelection() {
+        clearAllChipSelections()
+
+        when (currentSessionMinutes) {
+            5 -> chip5min.isChecked = true
+            15 -> chip15min.isChecked = true
+            30 -> chip30min.isChecked = true
+            60 -> chip1hour.isChecked = true
+            120 -> chip2hours.isChecked = true
+            180 -> chip3hours.isChecked = true
+            300 -> chip5hours.isChecked = true
+            480 -> chip8hours.isChecked = true
         }
     }
 
@@ -339,7 +339,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val isBlocking = switchBlocking.isChecked
-        val sessionLimit = currentSessionMinutes.coerceAtLeast(1)
+        val sessionLimit = currentSessionMinutes.coerceIn(1, 480)
 
         stateManager.saveMonitoringSettings(isBlocking, sessionLimit)
 

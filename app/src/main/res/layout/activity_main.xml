@@ -25,8 +25,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <LinearLayout
                     android:layout_width="0dp"
@@ -50,7 +50,6 @@
                         android:textColor="@color/textPrimary"
                         android:textSize="24sp"
                         android:textStyle="bold" />
-
                 </LinearLayout>
 
                 <ImageButton
@@ -59,19 +58,18 @@
                     android:layout_height="48dp"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/bg_circle_button"
-                    android:src="@drawable/ic_notification"
                     android:contentDescription="Notifications"
-                    android:scaleType="center" />
+                    android:scaleType="center"
+                    android:src="@drawable/ic_notification" />
 
                 <ImageButton
                     android:id="@+id/btnSettings"
                     android:layout_width="48dp"
                     android:layout_height="48dp"
                     android:background="@drawable/bg_circle_button"
-                    android:src="@drawable/ic_settings"
                     android:contentDescription="Settings"
-                    android:scaleType="center" />
-
+                    android:scaleType="center"
+                    android:src="@drawable/ic_settings" />
             </LinearLayout>
 
             <!-- Blocking Status Card -->
@@ -86,8 +84,8 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
                     android:gravity="center_vertical"
+                    android:orientation="horizontal"
                     android:padding="20dp">
 
                     <LinearLayout
@@ -99,23 +97,23 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:alpha="0.8"
                             android:text="Blocking Status"
                             android:textColor="@color/white"
-                            android:textSize="12sp"
-                            android:alpha="0.8" />
+                            android:textSize="12sp" />
 
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
+                            android:layout_marginTop="4dp"
                             android:gravity="center_vertical"
-                            android:layout_marginTop="4dp">
+                            android:orientation="horizontal">
 
                             <ImageView
                                 android:layout_width="20dp"
                                 android:layout_height="20dp"
-                                android:src="@drawable/ic_shield"
-                                android:contentDescription="Shield icon" />
+                                android:contentDescription="Shield icon"
+                                android:src="@drawable/ic_shield" />
 
                             <TextView
                                 android:id="@+id/tvBlockingStatus"
@@ -126,9 +124,7 @@
                                 android:textColor="@color/white"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
-
                         </LinearLayout>
-
                     </LinearLayout>
 
                     <androidx.appcompat.widget.SwitchCompat
@@ -138,9 +134,7 @@
                         android:checked="true"
                         android:thumb="@drawable/switch_thumb"
                         app:track="@drawable/switch_track" />
-
                 </LinearLayout>
-
             </androidx.cardview.widget.CardView>
 
             <!-- Apps to Block Section -->
@@ -148,10 +142,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
+                android:letterSpacing="0.1"
                 android:text="APPS TO BLOCK"
                 android:textColor="@color/mutedDark"
-                android:textSize="12sp"
-                android:letterSpacing="0.1" />
+                android:textSize="12sp" />
 
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
@@ -167,15 +161,14 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Empty State -->
                     <LinearLayout
                         android:id="@+id/emptyAppsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical"
+                        android:background="@drawable/bg_dashed_border"
                         android:gravity="center"
-                        android:padding="16dp"
-                        android:background="@drawable/bg_dashed_border">
+                        android:orientation="vertical"
+                        android:padding="16dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -183,10 +176,8 @@
                             android:text="No apps selected yet. Add apps below."
                             android:textColor="@color/muted"
                             android:textSize="14sp" />
-
                     </LinearLayout>
 
-                    <!-- Apps RecyclerView (hidden by default) -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/rvBlockedApps"
                         android:layout_width="match_parent"
@@ -194,7 +185,6 @@
                         android:visibility="gone"
                         tools:listitem="@layout/item_blocked_app" />
 
-                    <!-- Add App Button -->
                     <Button
                         android:id="@+id/btnAddApp"
                         android:layout_width="match_parent"
@@ -202,12 +192,10 @@
                         android:layout_marginTop="12dp"
                         android:background="@drawable/bg_outlined_button"
                         android:text="+ Add App to Block"
+                        android:textAllCaps="false"
                         android:textColor="@color/b600"
-                        android:textSize="14sp"
-                        android:textAllCaps="false" />
-
+                        android:textSize="14sp" />
                 </LinearLayout>
-
             </androidx.cardview.widget.CardView>
 
             <!-- Session Limit Section -->
@@ -229,8 +217,8 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -241,10 +229,10 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
+                                android:letterSpacing="0.1"
                                 android:text="SESSION LIMIT"
                                 android:textColor="@color/mutedDark"
-                                android:textSize="12sp"
-                                android:letterSpacing="0.1" />
+                                android:textSize="12sp" />
 
                             <TextView
                                 android:id="@+id/tvSessionDescription"
@@ -254,7 +242,6 @@
                                 android:text="Balanced focus"
                                 android:textColor="@color/muted"
                                 android:textSize="14sp" />
-
                         </LinearLayout>
 
                         <TextView
@@ -268,7 +255,6 @@
                             android:textColor="@color/white"
                             android:textSize="18sp"
                             android:textStyle="bold" />
-
                     </LinearLayout>
 
                     <!-- Slider -->
@@ -278,14 +264,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:contentDescription="Session time limit slider"
-                        android:valueFrom="5"
-                        android:valueTo="600"
+                        android:stepSize="1"
                         android:value="30"
-                        android:stepSize="5"
+                        android:valueFrom="1"
+                        android:valueTo="480"
+                        app:haloColor="@color/b200"
                         app:thumbColor="@color/b600"
                         app:trackColorActive="@color/b600"
-                        app:trackColorInactive="@color/muted2"
-                        app:haloColor="@color/b200" />
+                        app:trackColorInactive="@color/muted2" />
 
                     <!-- Slider Labels -->
                     <LinearLayout
@@ -297,69 +283,153 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="5 min"
+                            android:text="1 min"
                             android:textColor="@color/muted"
                             android:textSize="12sp" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="10 hours"
+                            android:text="8 hours"
                             android:textColor="@color/muted"
                             android:textSize="12sp" />
-
                     </LinearLayout>
 
-                    <!-- Time Chips -->
-                    <com.google.android.material.chip.ChipGroup
-                        android:id="@+id/chipGroupTime"
+                    <!-- Preset Chips Row 1 -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        app:singleSelection="true"
-                        app:chipSpacingHorizontal="8dp">
+                        android:orientation="horizontal"
+                        android:weightSum="4">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip5min"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="5 min"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip15min"
                             style="@style/TimeChipStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="15 min" />
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="15 min"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip30min"
                             style="@style/TimeChipStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
                             android:text="30 min"
-                            android:checked="true" />
-
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip1hour"
                             style="@style/TimeChipStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="1 hour" />
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="1 hour"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+
+                    <!-- Preset Chips Row 2 -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal"
+                        android:weightSum="4">
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip2hours"
                             style="@style/TimeChipStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="2 hours" />
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="2 hours"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip3hours"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="3 hours"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip5hours"
                             style="@style/TimeChipStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="5 hours" />
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="6dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="5 hours"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
 
-                    </com.google.android.material.chip.ChipGroup>
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip8hours"
+                            style="@style/TimeChipStyle"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="2dp"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:minHeight="52dp"
+                            android:text="8 hours"
+                            android:textAlignment="center"
+                            android:textSize="13sp" />
+                    </LinearLayout>
 
                 </LinearLayout>
-
             </androidx.cardview.widget.CardView>
 
             <!-- Save Button -->
@@ -370,13 +440,11 @@
                 android:layout_marginTop="24dp"
                 android:background="@drawable/bg_button_primary"
                 android:text="Save Settings"
+                android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="16sp"
-                android:textStyle="bold"
-                android:textAllCaps="false" />
-
+                android:textStyle="bold" />
         </LinearLayout>
-
     </ScrollView>
 
     <!-- Bottom Navigation -->
@@ -385,11 +453,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/cardWhite"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/bottom_nav_menu"
-        app:labelVisibilityMode="labeled"
+        app:itemActiveIndicatorStyle="@style/BottomNavIndicator"
         app:itemIconTint="@color/bottom_nav_color"
         app:itemTextColor="@color/bottom_nav_color"
-        app:itemActiveIndicatorStyle="@style/BottomNavIndicator" />
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
