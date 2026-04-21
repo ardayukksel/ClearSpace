@@ -9,13 +9,6 @@ VALUES
 ('Alex', 'alex@example.com', 15, 60),
 ('Jordan', 'jordan@example.com', 15, 60);
 
--- ========================================
--- FRIENDS (Sean selects Alex & Jordan)
--- ========================================
-INSERT INTO friends (user_id, friend_user_id, status)
-VALUES
-(1, 2, 'accepted'),
-(1, 3, 'accepted');
 
 -- ========================================
 -- CHALLENGES
@@ -35,25 +28,3 @@ VALUES
 (1, 'Instagram', NOW(), NOW(), 1300, TRUE),
 (1, 'Instagram', NOW(), NOW(), 1400, TRUE);
 
--- ========================================
--- UNLOCK REQUEST (triggered after breaches)
--- ========================================
-INSERT INTO unlock_requests (user_id, reason, status, created_at)
-VALUES
-(1, 'Repeated session limit breaches', 'pending', NOW());
-
--- ========================================
--- UNLOCK APPROVALS (Alex + Jordan must approve)
--- ========================================
-INSERT INTO unlock_request_approvals (unlock_request_id, friend_user_id, decision)
-VALUES
-(1, 2, 'pending'),
-(1, 3, 'pending');
-
--- ========================================
--- NOTIFICATIONS (friends get request)
--- ========================================
-INSERT INTO notifications (user_id, type, payload)
-VALUES
-(2, 'unlock_request', JSON_OBJECT('request_id', 1, 'from_user', 1)),
-(3, 'unlock_request', JSON_OBJECT('request_id', 1, 'from_user', 1));
