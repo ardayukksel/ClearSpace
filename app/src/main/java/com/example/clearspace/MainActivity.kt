@@ -25,6 +25,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
 import com.google.android.material.slider.Slider
 import java.util.Calendar
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -100,6 +101,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        setupGreeting()
         loadSavedState()
         updateBlockedAppsVisibility()
         bottomNavigation.selectedItemId = R.id.nav_home
@@ -154,7 +156,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         tvGreeting.text = greeting
-        tvUserName.text = stateManager.getLoggedInUserName()
+        tvUserName.text = formatDisplayName(stateManager.getLoggedInUserName())
     }
 
     private fun loadSavedState() {
@@ -405,6 +407,20 @@ class MainActivity : AppCompatActivity() {
             emptyAppsContainer.visibility = View.GONE
             rvBlockedApps.visibility = View.VISIBLE
         }
+    }
+
+    private fun formatDisplayName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isBlank()) return "User"
+
+        return trimmed
+            .lowercase(Locale.getDefault())
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
+            }
     }
 
     data class BlockedApp(

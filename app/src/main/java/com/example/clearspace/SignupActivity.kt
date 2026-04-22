@@ -17,6 +17,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import java.util.Locale
 
 class SignupActivity : AppCompatActivity() {
 
@@ -40,26 +41,54 @@ class SignupActivity : AppCompatActivity() {
         val btnCreateAccount = findViewById<Button>(R.id.btn_create_account)
         val tvBackToLogin = findViewById<TextView>(R.id.tv_back_to_login)
 
-        // Style subtitle with colored text
         val subtitleText = "Start your digital wellbeing journey"
         val spannableSubtitle = SpannableString(subtitleText)
         val startIndex = subtitleText.indexOf("digital wellbeing")
         val endIndex = startIndex + "digital wellbeing".length
-        spannableSubtitle.setSpan(ForegroundColorSpan(Color.parseColor("#4CAF50")), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableSubtitle.setSpan(StyleSpan(Typeface.BOLD), startIndex, endIndex, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableSubtitle.setSpan(
+            ForegroundColorSpan(Color.parseColor("#4CAF50")),
+            startIndex,
+            endIndex,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannableSubtitle.setSpan(
+            StyleSpan(Typeface.BOLD),
+            startIndex,
+            endIndex,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
         tvSubtitle.text = spannableSubtitle
 
-        // Style terms text with bold links
         val termsText = "By creating an account, you agree to our Terms of Service and Privacy Policy."
         val spannableTerms = SpannableString(termsText)
         val tosStart = termsText.indexOf("Terms of Service")
         val tosEnd = tosStart + "Terms of Service".length
         val ppStart = termsText.indexOf("Privacy Policy")
         val ppEnd = ppStart + "Privacy Policy".length
-        spannableTerms.setSpan(ForegroundColorSpan(Color.parseColor("#5D4037")), tosStart, tosEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableTerms.setSpan(StyleSpan(Typeface.BOLD), tosStart, tosEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableTerms.setSpan(ForegroundColorSpan(Color.parseColor("#5D4037")), ppStart, ppEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        spannableTerms.setSpan(StyleSpan(Typeface.BOLD), ppStart, ppEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        spannableTerms.setSpan(
+            ForegroundColorSpan(Color.parseColor("#5D4037")),
+            tosStart,
+            tosEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannableTerms.setSpan(
+            StyleSpan(Typeface.BOLD),
+            tosStart,
+            tosEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannableTerms.setSpan(
+            ForegroundColorSpan(Color.parseColor("#5D4037")),
+            ppStart,
+            ppEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        spannableTerms.setSpan(
+            StyleSpan(Typeface.BOLD),
+            ppStart,
+            ppEnd,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
         tvTerms.text = spannableTerms
 
         ivBack.setOnClickListener {
@@ -120,9 +149,11 @@ class SignupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val formattedName = formatDisplayName(name)
+
             val sharedPref = getSharedPreferences("ClearSpacePrefs", MODE_PRIVATE)
             sharedPref.edit {
-                putString("userName", name)
+                putString("userName", formattedName)
                 putString("userEmail", email)
             }
 
@@ -132,5 +163,19 @@ class SignupActivity : AppCompatActivity() {
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
         }
+    }
+
+    private fun formatDisplayName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isBlank()) return "User"
+
+        return trimmed
+            .lowercase(Locale.getDefault())
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
+            }
     }
 }

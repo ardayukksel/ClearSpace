@@ -14,6 +14,7 @@ import com.example.clearspace.data.network.RetrofitClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -57,6 +58,7 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        loadUserData()
         refreshChallengeSection()
         loadSessionData()
         startCountdownRefresh()
@@ -92,9 +94,12 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun loadUserData() {
-        val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
-        val name = sharedPref.getString("userName", "User") ?: "User"
-        tvUserName.text = name
+        val rawName = stateManager.getLoggedInUserName().ifBlank {
+            val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
+            sharedPref.getString("userName", "User") ?: "User"
+        }
+
+        tvUserName.text = formatDisplayName(rawName)
     }
 
     private fun loadSessionData() {
@@ -281,6 +286,20 @@ class DashboardActivity : AppCompatActivity() {
             minutes % 60 == 0 -> "${minutes / 60} hours"
             else -> "${minutes / 60}h ${minutes % 60}m"
         }
+    }
+
+    private fun formatDisplayName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isBlank()) return "User"
+
+        return trimmed
+            .lowercase(Locale.getDefault())
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
+            }
     }
 
     override fun onDestroy() {

@@ -22,6 +22,7 @@ import com.example.clearspace.data.network.FindOrCreateUserRequest
 import com.example.clearspace.data.network.RetrofitClient
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
+import java.util.Locale
 
 class LoginActivity : AppCompatActivity() {
 
@@ -114,10 +115,12 @@ class LoginActivity : AppCompatActivity() {
                         )
                     )
 
+                    val formattedUserName = formatDisplayName(response.user_name)
+
                     stateManager.saveLoggedInUser(
                         response.user_id,
                         response.email,
-                        response.user_name
+                        formattedUserName
                     )
 
                     val nextActivity = if (hasCompletedOnboarding) {
@@ -163,5 +166,19 @@ class LoginActivity : AppCompatActivity() {
                 password.any { it.isUpperCase() } &&
                 password.any { it.isLowerCase() } &&
                 password.any { it.isDigit() }
+    }
+
+    private fun formatDisplayName(rawName: String): String {
+        val trimmed = rawName.trim()
+        if (trimmed.isBlank()) return "User"
+
+        return trimmed
+            .lowercase(Locale.getDefault())
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
+            }
     }
 }
