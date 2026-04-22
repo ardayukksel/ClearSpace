@@ -87,17 +87,18 @@
 
                     </LinearLayout>
 
-                    <Button
-                        android:id="@+id/btnAddCommitment"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
+                    <TextView
+                        android:id="@+id/tvCommitment"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:background="@drawable/bg_commitment_button"
                         android:paddingHorizontal="16dp"
-                        android:text="+ Add your commitment"
-                        android:textColor="@color/white"
-                        android:textSize="12sp"
-                        android:textAllCaps="false" />
+                        android:paddingVertical="14dp"
+                        android:text="No commitment set yet. Add one in Review Onboarding."
+                        android:textColor="@color/b800"
+                        android:textSize="13sp"
+                        android:lineSpacingExtra="2dp" />
 
                 </LinearLayout>
 

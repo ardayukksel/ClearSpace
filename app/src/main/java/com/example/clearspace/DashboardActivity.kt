@@ -31,7 +31,7 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var tvChallengeTitle: TextView
     private lateinit var tvChallengeSubtitle: TextView
     private lateinit var btnSetupChallenge: Button
-    private lateinit var btnAddCommitment: Button
+    private lateinit var tvCommitment: TextView
     private lateinit var onboardingCard: LinearLayout
     private lateinit var bottomNavigation: BottomNavigationView
 
@@ -49,6 +49,7 @@ class DashboardActivity : AppCompatActivity() {
 
         initViews()
         loadUserData()
+        loadCommitment()
         loadSessionData()
         refreshChallengeSection()
         setupClickListeners()
@@ -59,6 +60,7 @@ class DashboardActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         loadUserData()
+        loadCommitment()
         refreshChallengeSection()
         loadSessionData()
         startCountdownRefresh()
@@ -82,7 +84,7 @@ class DashboardActivity : AppCompatActivity() {
         tvChallengeTitle = findViewById(R.id.tvChallengeTitle)
         tvChallengeSubtitle = findViewById(R.id.tvChallengeSubtitle)
         btnSetupChallenge = findViewById(R.id.btnSetupChallenge)
-        btnAddCommitment = findViewById(R.id.btnAddCommitment)
+        tvCommitment = findViewById(R.id.tvCommitment)
         onboardingCard = findViewById(R.id.onboardingCard)
         bottomNavigation = findViewById(R.id.bottomNavigation)
 
@@ -100,6 +102,16 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         tvUserName.text = formatDisplayName(rawName)
+    }
+
+    private fun loadCommitment() {
+        val goal = stateManager.getUserGoal().trim()
+
+        tvCommitment.text = if (goal.isNotBlank()) {
+            goal
+        } else {
+            "No commitment set yet. Add one in Review Onboarding."
+        }
     }
 
     private fun loadSessionData() {
@@ -194,10 +206,6 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        btnAddCommitment.setOnClickListener {
-            // Add your commitment feature later
-        }
-
         btnSetupChallenge.setOnClickListener {
             startActivity(Intent(this, ChallengePreferencesActivity::class.java))
         }
