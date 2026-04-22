@@ -2,21 +2,21 @@ package com.example.clearspace
 
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.InputType
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
-import android.graphics.Typeface
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.util.Patterns
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
+import androidx.lifecycle.lifecycleScope
+import com.example.clearspace.data.network.RegisterRequest
+import com.example.clearspace.data.network.RetrofitClient
+import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import java.util.Locale
 
 class SignupActivity : AppCompatActivity() {
@@ -27,6 +27,8 @@ class SignupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
+
+        val stateManager = ClearSpaceStateManager(this)
 
         val ivBack = findViewById<ImageView>(R.id.iv_back)
         val tvSubtitle = findViewById<TextView>(R.id.tv_subtitle)
@@ -41,6 +43,7 @@ class SignupActivity : AppCompatActivity() {
         val btnCreateAccount = findViewById<Button>(R.id.btn_create_account)
         val tvBackToLogin = findViewById<TextView>(R.id.tv_back_to_login)
 
+        // 🔥 Subtitle styling
         val subtitleText = "Start your digital wellbeing journey"
         val spannableSubtitle = SpannableString(subtitleText)
         val startIndex = subtitleText.indexOf("digital wellbeing")
@@ -59,12 +62,16 @@ class SignupActivity : AppCompatActivity() {
         )
         tvSubtitle.text = spannableSubtitle
 
+        // 🔥 Terms styling
         val termsText = "By creating an account, you agree to our Terms of Service and Privacy Policy."
         val spannableTerms = SpannableString(termsText)
+
         val tosStart = termsText.indexOf("Terms of Service")
         val tosEnd = tosStart + "Terms of Service".length
+
         val ppStart = termsText.indexOf("Privacy Policy")
         val ppEnd = ppStart + "Privacy Policy".length
+
         spannableTerms.setSpan(
             ForegroundColorSpan(Color.parseColor("#5D4037")),
             tosStart,
@@ -89,80 +96,104 @@ class SignupActivity : AppCompatActivity() {
             ppEnd,
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
+
         tvTerms.text = spannableTerms
 
-        ivBack.setOnClickListener {
-            finish()
-        }
+        // 🔙 Navigation
+        ivBack.setOnClickListener { finish() }
+        tvBackToLogin.setOnClickListener { finish() }
 
+        // 👁 Password toggle
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-            if (isPasswordVisible) {
-                etPassword.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                ivTogglePassword.setImageResource(R.drawable.ic_visibility)
-            } else {
-                etPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                ivTogglePassword.setImageResource(R.drawable.ic_visibility_off)
-            }
+            etPassword.inputType =
+                if (isPasswordVisible)
+                    InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                else
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+
             etPassword.setSelection(etPassword.text.length)
         }
 
         ivToggleConfirmPassword.setOnClickListener {
             isConfirmPasswordVisible = !isConfirmPasswordVisible
-            if (isConfirmPasswordVisible) {
-                etConfirmPassword.inputType = InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                ivToggleConfirmPassword.setImageResource(R.drawable.ic_visibility)
-            } else {
-                etConfirmPassword.inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                ivToggleConfirmPassword.setImageResource(R.drawable.ic_visibility_off)
-            }
+            etConfirmPassword.inputType =
+                if (isConfirmPasswordVisible)
+                    InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                else
+                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+
             etConfirmPassword.setSelection(etConfirmPassword.text.length)
         }
 
-        tvBackToLogin.setOnClickListener {
-            finish()
-        }
-
+        // 🚀 CREATE ACCOUNT
         btnCreateAccount.setOnClickListener {
             val name = etName.text.toString().trim()
             val email = etEmail.text.toString().trim()
-            val password = etPassword.text.toString()
-            val confirmPassword = etConfirmPassword.text.toString()
+            val password = etPassword.text.toString().trim()
+            val confirmPassword = etConfirmPassword.text.toString().trim()
 
             if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-                Toast.makeText(this, "Please fill in all fields.", Toast.LENGTH_SHORT).show()
+                toast("Please fill in all fields")
                 return@setOnClickListener
             }
 
-            if (password.length < 6) {
-                Toast.makeText(this, "Password must be at least 6 characters.", Toast.LENGTH_SHORT).show()
+            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                toast("Invalid email")
+                return@setOnClickListener
+            }
+
+            if (password.length < 8) {
+                toast("Password must be at least 8 characters")
                 return@setOnClickListener
             }
 
             if (password != confirmPassword) {
-                Toast.makeText(this, "Passwords do not match.", Toast.LENGTH_SHORT).show()
+                toast("Passwords do not match")
                 return@setOnClickListener
             }
 
             if (!cbTerms.isChecked) {
-                Toast.makeText(this, "Please agree to the Terms of Service and Privacy Policy.", Toast.LENGTH_SHORT).show()
+                toast("Please accept the terms")
                 return@setOnClickListener
             }
 
             val formattedName = formatDisplayName(name)
 
-            val sharedPref = getSharedPreferences("ClearSpacePrefs", MODE_PRIVATE)
-            sharedPref.edit {
-                putString("userName", formattedName)
-                putString("userEmail", email)
+            lifecycleScope.launch {
+                try {
+                    val response = RetrofitClient.api.register(
+                        RegisterRequest(
+                            email = email,
+                            password = password,
+                            user_name = formattedName
+                        )
+                    )
+
+                    // ✅ Save logged-in user
+                    stateManager.saveLoggedInUser(
+                        response.user_id,
+                        response.email,
+                        response.user_name
+                    )
+
+                    toast("Account created successfully!")
+
+                    val intent = Intent(this@SignupActivity, OnboardingActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+
+                } catch (e: HttpException) {
+                    toast("User already exists")
+                } catch (e: Exception) {
+                    toast("Error: ${e.message}")
+                }
             }
-
-            Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
-
-            val intent = Intent(this, OnboardingActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
         }
+    }
+
+    private fun toast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
 
     private fun formatDisplayName(rawName: String): String {
@@ -171,11 +202,9 @@ class SignupActivity : AppCompatActivity() {
 
         return trimmed
             .lowercase(Locale.getDefault())
-            .split(Regex("\\s+"))
-            .joinToString(" ") { part ->
-                part.replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
-                }
+            .split(" ")
+            .joinToString(" ") {
+                it.replaceFirstChar { c -> c.uppercase() }
             }
     }
 }

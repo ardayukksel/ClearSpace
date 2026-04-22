@@ -5,7 +5,32 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
+data class LoginRequest(
+    val email: String,
+    val password: String
+)
+
+data class RegisterRequest(
+    val email: String,
+    val password: String,
+    val user_name: String
+)
+
+data class AuthResponse(
+    val success: Boolean,
+    val message: String,
+    val user_id: Int,
+    val user_name: String,
+    val email: String
+)
+
 interface ApiService {
+
+    @POST("users/login")
+    suspend fun login(@Body request: LoginRequest): AuthResponse
+
+    @POST("users/register")
+    suspend fun register(@Body request: RegisterRequest): AuthResponse
 
     @GET("challenges/active")
     suspend fun getActiveChallenges(): List<ChallengeDto>
@@ -18,9 +43,6 @@ interface ApiService {
 
     @POST("sessions/update-duration")
     suspend fun updateSessionDuration(@Body request: UpdateSessionDurationRequest): GenericResponse
-
-    @POST("users/find-or-create")
-    suspend fun findOrCreateUser(@Body request: FindOrCreateUserRequest): FindOrCreateUserResponse
 
     @POST("user-challenges/complete")
     suspend fun completeChallenge(@Body request: CompleteChallengeRequest): CompleteChallengeResponse

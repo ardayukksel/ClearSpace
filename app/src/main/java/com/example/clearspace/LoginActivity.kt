@@ -11,14 +11,10 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Patterns
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.example.clearspace.data.network.FindOrCreateUserRequest
+import com.example.clearspace.data.network.LoginRequest
 import com.example.clearspace.data.network.RetrofitClient
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -54,7 +50,6 @@ class LoginActivity : AppCompatActivity() {
         val etPassword = findViewById<EditText>(R.id.et_password)
         val ivTogglePassword = findViewById<ImageView>(R.id.iv_toggle_password)
         val btnLogin = findViewById<Button>(R.id.btn_login)
-        val tvForgotPassword = findViewById<TextView>(R.id.tv_forgot_password)
         val tvSignup = findViewById<TextView>(R.id.tv_signup)
 
         val subtitleText = "Sign in to continue your focus journey"
@@ -77,15 +72,12 @@ class LoginActivity : AppCompatActivity() {
 
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-            if (isPasswordVisible) {
-                etPassword.inputType =
+            etPassword.inputType =
+                if (isPasswordVisible)
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                ivTogglePassword.setImageResource(R.drawable.ic_visibility)
-            } else {
-                etPassword.inputType =
+                else
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                ivTogglePassword.setImageResource(R.drawable.ic_visibility_off)
-            }
+
             etPassword.setSelection(etPassword.text.length)
         }
 
@@ -93,47 +85,28 @@ class LoginActivity : AppCompatActivity() {
             val email = etEmail.text.toString().trim()
             val password = etPassword.text.toString().trim()
 
-            when {
-                email.isBlank() -> {
-                    etEmail.error = "Email is required"
-                    etEmail.requestFocus()
-                    return@setOnClickListener
-                }
+            if (!isValidEmail(email)) {
+                etEmail.error = "Invalid email"
+                return@setOnClickListener
+            }
 
-                !isValidEmail(email) -> {
-                    etEmail.error = "Enter a valid email address"
-                    etEmail.requestFocus()
-                    return@setOnClickListener
-                }
-
-                password.isBlank() -> {
-                    etPassword.error = "Password is required"
-                    etPassword.requestFocus()
-                    return@setOnClickListener
-                }
-
-                !isValidPassword(password) -> {
-                    etPassword.error = "Password must be at least 8 characters, include 1 uppercase, 1 lowercase, and 1 number"
-                    etPassword.requestFocus()
-                    return@setOnClickListener
-                }
+            if (password.length < 8) {
+                etPassword.error = "Password too short"
+                return@setOnClickListener
             }
 
             lifecycleScope.launch {
                 try {
-                    val response = RetrofitClient.api.findOrCreateUser(
-                        FindOrCreateUserRequest(
-                            email = email,
-                            password = password
-                        )
+                    val response = RetrofitClient.api.login(
+                        LoginRequest(email, password)
                     )
 
-                    val formattedUserName = formatDisplayName(response.user_name)
+                    val formattedName = formatDisplayName(response.user_name)
 
                     stateManager.saveLoggedInUser(
                         response.user_id,
                         response.email,
-                        formattedUserName
+                        formattedName
                     )
 
                     val nextActivity = if (hasCompletedOnboarding) {
@@ -144,25 +117,21 @@ class LoginActivity : AppCompatActivity() {
 
                     startActivity(Intent(this@LoginActivity, nextActivity))
                     finish()
+
                 } catch (e: HttpException) {
-                    val errorBody = e.response()?.errorBody()?.string()
                     Toast.makeText(
                         this@LoginActivity,
-                        "Login failed: ${errorBody ?: "HTTP ${e.code()}"}",
+                        "Wrong email or password",
                         Toast.LENGTH_LONG
                     ).show()
                 } catch (e: Exception) {
                     Toast.makeText(
                         this@LoginActivity,
-                        "Login failed: ${e.message}",
+                        "Error: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
                 }
             }
-        }
-
-        tvForgotPassword.setOnClickListener {
-            startActivity(Intent(this, ForgotPasswordActivity::class.java))
         }
 
         tvSignup.setOnClickListener {
@@ -170,28 +139,17 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun isValidEmail(email: String): Boolean {
-        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
-    }
-
-    private fun isValidPassword(password: String): Boolean {
-        return password.length >= 8 &&
-                password.any { it.isUpperCase() } &&
-                password.any { it.isLowerCase() } &&
-                password.any { it.isDigit() }
-    }
+    private fun isValidEmail(email: String) =
+        Patterns.EMAIL_ADDRESS.matcher(email).matches()
 
     private fun formatDisplayName(rawName: String): String {
         val trimmed = rawName.trim()
         if (trimmed.isBlank()) return "User"
 
-        return trimmed
-            .lowercase(Locale.getDefault())
-            .split(Regex("\\s+"))
-            .joinToString(" ") { part ->
-                part.replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
-                }
+        return trimmed.lowercase(Locale.getDefault())
+            .split(" ")
+            .joinToString(" ") {
+                it.replaceFirstChar { c -> c.uppercase() }
             }
     }
 }
