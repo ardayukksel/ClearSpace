@@ -37,8 +37,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sliderSessionLimit: Slider
     private lateinit var btnAddApp: Button
     private lateinit var btnSaveSettings: Button
-    private lateinit var btnNotification: ImageButton
-    private lateinit var btnSettings: ImageButton
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var emptyAppsContainer: LinearLayout
     private lateinit var rvBlockedApps: RecyclerView
@@ -117,8 +115,6 @@ class MainActivity : AppCompatActivity() {
         sliderSessionLimit = findViewById(R.id.sliderSessionLimit)
         btnAddApp = findViewById(R.id.btnAddApp)
         btnSaveSettings = findViewById(R.id.btnSaveSettings)
-        btnNotification = findViewById(R.id.btnNotification)
-        btnSettings = findViewById(R.id.btnSettings)
         bottomNavigation = findViewById(R.id.bottomNavigation)
         emptyAppsContainer = findViewById(R.id.emptyAppsContainer)
         rvBlockedApps = findViewById(R.id.rvBlockedApps)
@@ -301,14 +297,6 @@ class MainActivity : AppCompatActivity() {
 
         btnSaveSettings.setOnClickListener {
             saveSettings()
-        }
-
-        btnNotification.setOnClickListener {
-            Toast.makeText(this, "Notifications", Toast.LENGTH_SHORT).show()
-        }
-
-        btnSettings.setOnClickListener {
-            Toast.makeText(this, "Settings", Toast.LENGTH_SHORT).show()
         }
     }
 
