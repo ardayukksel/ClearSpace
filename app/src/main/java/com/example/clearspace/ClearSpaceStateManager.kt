@@ -20,6 +20,11 @@ class ClearSpaceStateManager(context: Context) {
         private const val KEY_LOGGED_IN_USER_ID = "logged_in_user_id"
         private const val KEY_LOGGED_IN_EMAIL = "logged_in_email"
         private const val KEY_LOGGED_IN_USER_NAME = "logged_in_user_name"
+        private const val KEY_LOGGED_IN_POINTS = "logged_in_points"
+        private const val KEY_LOGGED_IN_LEVEL = "logged_in_level"
+        private const val KEY_LOGGED_IN_CURRENT_STREAK = "logged_in_current_streak"
+        private const val KEY_LOGGED_IN_LONGEST_STREAK = "logged_in_longest_streak"
+        private const val KEY_LOGGED_IN_LAST_STREAK_DATE = "logged_in_last_streak_date"
 
         private const val KEY_USER_NAME_LEGACY = "userName"
         private const val KEY_USER_EMAIL_LEGACY = "userEmail"
@@ -200,11 +205,25 @@ class ClearSpaceStateManager(context: Context) {
             .commit()
     }
 
-    fun saveLoggedInUser(userId: Int, email: String, userName: String) {
+    fun saveLoggedInUser(
+        userId: Int,
+        email: String,
+        userName: String,
+        points: Int = 0,
+        level: Int = 1,
+        currentStreak: Int = 0,
+        longestStreak: Int = 0,
+        lastStreakDate: String? = null
+    ) {
         prefs.edit()
             .putInt(KEY_LOGGED_IN_USER_ID, userId)
             .putString(KEY_LOGGED_IN_EMAIL, email)
             .putString(KEY_LOGGED_IN_USER_NAME, userName)
+            .putInt(KEY_LOGGED_IN_POINTS, points)
+            .putInt(KEY_LOGGED_IN_LEVEL, level)
+            .putInt(KEY_LOGGED_IN_CURRENT_STREAK, currentStreak)
+            .putInt(KEY_LOGGED_IN_LONGEST_STREAK, longestStreak)
+            .putString(KEY_LOGGED_IN_LAST_STREAK_DATE, lastStreakDate)
             .putString(KEY_USER_NAME_LEGACY, userName)
             .putString(KEY_USER_EMAIL_LEGACY, email)
             .apply()
@@ -222,6 +241,26 @@ class ClearSpaceStateManager(context: Context) {
         return prefs.getString(KEY_LOGGED_IN_USER_NAME, "User") ?: "User"
     }
 
+    fun getUserPoints(): Int {
+        return prefs.getInt(KEY_LOGGED_IN_POINTS, 0)
+    }
+
+    fun getUserLevel(): Int {
+        return prefs.getInt(KEY_LOGGED_IN_LEVEL, 1)
+    }
+
+    fun getUserCurrentStreak(): Int {
+        return prefs.getInt(KEY_LOGGED_IN_CURRENT_STREAK, 0)
+    }
+
+    fun getUserLongestStreak(): Int {
+        return prefs.getInt(KEY_LOGGED_IN_LONGEST_STREAK, 0)
+    }
+
+    fun getUserLastStreakDate(): String? {
+        return prefs.getString(KEY_LOGGED_IN_LAST_STREAK_DATE, null)
+    }
+
     fun isUserLoggedIn(): Boolean {
         return getLoggedInUserId() > 0 && getLoggedInEmail().isNotBlank()
     }
@@ -231,6 +270,11 @@ class ClearSpaceStateManager(context: Context) {
             .remove(KEY_LOGGED_IN_USER_ID)
             .remove(KEY_LOGGED_IN_EMAIL)
             .remove(KEY_LOGGED_IN_USER_NAME)
+            .remove(KEY_LOGGED_IN_POINTS)
+            .remove(KEY_LOGGED_IN_LEVEL)
+            .remove(KEY_LOGGED_IN_CURRENT_STREAK)
+            .remove(KEY_LOGGED_IN_LONGEST_STREAK)
+            .remove(KEY_LOGGED_IN_LAST_STREAK_DATE)
             .remove(KEY_USER_NAME_LEGACY)
             .remove(KEY_USER_EMAIL_LEGACY)
             .apply()

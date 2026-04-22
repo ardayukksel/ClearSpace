@@ -60,6 +60,7 @@ class LoginActivity : AppCompatActivity() {
         val spannableSubtitle = SpannableString(subtitleText)
         val startIndex = subtitleText.indexOf("focus journey")
         val endIndex = startIndex + "focus journey".length
+
         spannableSubtitle.setSpan(
             ForegroundColorSpan(Color.parseColor("#4CAF50")),
             startIndex,
@@ -76,15 +77,17 @@ class LoginActivity : AppCompatActivity() {
 
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-            etPassword.inputType =
-                if (isPasswordVisible)
-                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-                else
-                    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+
+            etPassword.inputType = if (isPasswordVisible) {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+            } else {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
 
             etPassword.setSelection(etPassword.text.length)
             ivTogglePassword.setImageResource(
-                if (isPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
+                if (isPasswordVisible) R.drawable.ic_visibility
+                else R.drawable.ic_visibility_off
             )
         }
 
@@ -104,16 +107,18 @@ class LoginActivity : AppCompatActivity() {
 
             lifecycleScope.launch {
                 try {
-                    val response = RetrofitClient.api.login(
-                        LoginRequest(email, password)
-                    )
-
+                    val response = RetrofitClient.api.login(LoginRequest(email, password))
                     val formattedName = formatDisplayName(response.user_name)
 
                     stateManager.saveLoggedInUser(
-                        response.user_id,
-                        response.email,
-                        formattedName
+                        userId = response.user_id,
+                        email = response.email,
+                        userName = formattedName,
+                        points = response.points ?: 0,
+                        level = response.level ?: 1,
+                        currentStreak = response.current_streak ?: 0,
+                        longestStreak = response.longest_streak ?: 0,
+                        lastStreakDate = response.last_streak_date
                     )
 
                     val nextActivity = if (hasCompletedOnboarding) {
@@ -159,7 +164,11 @@ class LoginActivity : AppCompatActivity() {
             .split(Regex("\\s+"))
             .joinToString(" ") { part ->
                 part.replaceFirstChar { char ->
-                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                    if (char.isLowerCase()) {
+                        char.titlecase(Locale.getDefault())
+                    } else {
+                        char.toString()
+                    }
                 }
             }
     }

@@ -21,7 +21,14 @@ data class AuthResponse(
     val message: String,
     val user_id: Int,
     val user_name: String,
-    val email: String
+    val email: String,
+    val session_limit_minutes: Int? = null,
+    val daily_limit_minutes: Int? = null,
+    val points: Int? = null,
+    val level: Int? = null,
+    val current_streak: Int? = null,
+    val longest_streak: Int? = null,
+    val last_streak_date: String? = null
 )
 
 interface ApiService {

@@ -54,6 +54,8 @@ class DashboardActivity : AppCompatActivity() {
         refreshChallengeSection()
         setupClickListeners()
         setupBottomNavigation()
+
+        showSavedGamificationData()
         loadGamificationData()
     }
 
@@ -64,7 +66,10 @@ class DashboardActivity : AppCompatActivity() {
         refreshChallengeSection()
         loadSessionData()
         startCountdownRefresh()
+
+        showSavedGamificationData()
         loadGamificationData()
+
         bottomNavigation.selectedItemId = R.id.nav_dashboard
     }
 
@@ -177,7 +182,7 @@ class DashboardActivity : AppCompatActivity() {
         val userId = stateManager.getLoggedInUserId()
 
         if (userId <= 0) {
-            showGamificationFallback()
+            showSavedGamificationData()
             return
         }
 
@@ -186,23 +191,54 @@ class DashboardActivity : AppCompatActivity() {
                 val response = RetrofitClient.api.getUserGamification(userId)
                 val data = response.gamification
 
+                stateManager.saveLoggedInUser(
+                    userId = stateManager.getLoggedInUserId(),
+                    email = stateManager.getLoggedInEmail(),
+                    userName = stateManager.getLoggedInUserName(),
+                    points = data.points,
+                    level = data.level,
+                    currentStreak = data.current_streak,
+                    longestStreak = data.longest_streak,
+                    lastStreakDate = data.last_streak_date
+                )
+
                 tvCurrentStreak.text = "Current streak: ${data.current_streak} day(s)"
                 tvLongestStreak.text = "Longest streak: ${data.longest_streak} day(s)"
-                tvLastStreakDate.text = "Last completed day: ${data.last_streak_date ?: "--"}"
+                val formattedDate = try {
+                    data.last_streak_date?.let {
+                        val parser = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+                        parser.timeZone = java.util.TimeZone.getTimeZone("UTC")
+
+                        val date = parser.parse(it)
+
+                        val formatter = java.text.SimpleDateFormat("MMMM d", Locale.getDefault())
+                        formatter.format(date!!)
+                    }
+                } catch (e: Exception) {
+                    null
+                }
+
+                tvLastStreakDate.text = "Last completed day: ${formattedDate ?: "--"}"
                 tvPoints.text = "Points: ${data.points}"
                 tvLevel.text = "Level: ${data.level}"
             } catch (e: Exception) {
-                showGamificationFallback()
+                showSavedGamificationData()
             }
         }
     }
 
-    private fun showGamificationFallback() {
-        tvCurrentStreak.text = "Current streak: --"
-        tvLongestStreak.text = "Longest streak: --"
-        tvLastStreakDate.text = "Last completed day: --"
-        tvPoints.text = "Points: --"
-        tvLevel.text = "Level: --"
+    private fun showSavedGamificationData() {
+        val currentStreak = stateManager.getUserCurrentStreak()
+        val longestStreak = stateManager.getUserLongestStreak()
+        val lastStreakDate = stateManager.getUserLastStreakDate()
+        val points = stateManager.getUserPoints()
+        val level = stateManager.getUserLevel()
+
+        tvCurrentStreak.text = "Current streak: ${currentStreak} day(s)"
+        tvLongestStreak.text = "Longest streak: ${longestStreak} day(s)"
+        tvLastStreakDate.text = "Last completed day: ${lastStreakDate ?: "--"}"
+        tvPoints.text = "Points: ${points}"
+        tvLevel.text = "Level: ${level}"
     }
 
     private fun setupClickListeners() {

@@ -13,7 +13,6 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -113,6 +112,7 @@ class MainActivity : AppCompatActivity() {
         setupButtons()
         setupBottomNavigation()
         setupAccountMenu()
+        showSavedAccountSummary()
         loadAccountSummary()
         updateBlockedAppsVisibility()
     }
@@ -127,6 +127,7 @@ class MainActivity : AppCompatActivity() {
 
         setupGreeting()
         loadSavedState()
+        showSavedAccountSummary()
         loadAccountSummary()
         updateBlockedAppsVisibility()
         bottomNavigation.selectedItemId = R.id.nav_home
@@ -347,22 +348,38 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadAccountSummary() {
-        tvAccountMenuLevel.text = "Level: --"
-        tvAccountMenuPoints.text = "Points: --"
+    private fun showSavedAccountSummary() {
+        tvAccountMenuLevel.text = "Level: ${stateManager.getUserLevel()}"
+        tvAccountMenuPoints.text = "Points: ${stateManager.getUserPoints()}"
+    }
 
+    private fun loadAccountSummary() {
         val userId = stateManager.getLoggedInUserId()
-        if (userId <= 0) return
+        if (userId <= 0) {
+            showSavedAccountSummary()
+            return
+        }
 
         lifecycleScope.launch {
             try {
                 val response = RetrofitClient.api.getUserGamification(userId)
                 val data = response.gamification
+
+                stateManager.saveLoggedInUser(
+                    userId = stateManager.getLoggedInUserId(),
+                    email = stateManager.getLoggedInEmail(),
+                    userName = stateManager.getLoggedInUserName(),
+                    points = data.points,
+                    level = data.level,
+                    currentStreak = data.current_streak,
+                    longestStreak = data.longest_streak,
+                    lastStreakDate = data.last_streak_date
+                )
+
                 tvAccountMenuLevel.text = "Level: ${data.level}"
                 tvAccountMenuPoints.text = "Points: ${data.points}"
             } catch (_: Exception) {
-                tvAccountMenuLevel.text = "Level: --"
-                tvAccountMenuPoints.text = "Points: --"
+                showSavedAccountSummary()
             }
         }
     }
