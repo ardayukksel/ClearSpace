@@ -222,6 +222,10 @@ class ClearSpaceStateManager(context: Context) {
         return prefs.getString(KEY_LOGGED_IN_USER_NAME, "User") ?: "User"
     }
 
+    fun isUserLoggedIn(): Boolean {
+        return getLoggedInUserId() > 0 && getLoggedInEmail().isNotBlank()
+    }
+
     fun logoutUser() {
         prefs.edit()
             .remove(KEY_LOGGED_IN_USER_ID)

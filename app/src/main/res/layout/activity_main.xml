@@ -24,24 +24,108 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvGreeting"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Good morning"
+                        android:textColor="@color/mutedDark"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            android:contentDescription="Leaf icon"
+                            android:src="@drawable/ic_profile_leaf" />
+
+                        <TextView
+                            android:id="@+id/tvUserName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Alex"
+                            android:textColor="@color/textPrimary"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btnAccount"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_circle_button"
+                    android:contentDescription="Account"
+                    android:padding="10dp"
+                    android:scaleType="centerInside"
+                    android:src="@android:drawable/ic_menu_myplaces" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/accountMenuContainer"
+                android:layout_width="220dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_edit_text"
+                android:elevation="6dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
 
                 <TextView
-                    android:id="@+id/tvGreeting"
+                    android:id="@+id/tvAccountMenuName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Good morning"
+                    android:text="User"
+                    android:textColor="@color/b800"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvAccountMenuLevel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Level: --"
                     android:textColor="@color/mutedDark"
                     android:textSize="14sp" />
 
                 <TextView
-                    android:id="@+id/tvUserName"
+                    android:id="@+id/tvAccountMenuPoints"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Alex"
-                    android:textColor="@color/textPrimary"
-                    android:textSize="24sp"
-                    android:textStyle="bold" />
+                    android:layout_marginTop="4dp"
+                    android:text="Points: --"
+                    android:textColor="@color/mutedDark"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnLogout"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_outlined_button"
+                    android:text="Log out"
+                    android:textAllCaps="false"
+                    android:textColor="@color/b600"
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <androidx.cardview.widget.CardView

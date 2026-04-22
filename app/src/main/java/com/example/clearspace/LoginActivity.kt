@@ -30,6 +30,23 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
+        val stateManager = ClearSpaceStateManager(this)
+        val hasCompletedOnboarding = sharedPref.getBoolean("hasCompletedOnboarding", false)
+
+        if (stateManager.isUserLoggedIn()) {
+            val nextActivity = if (hasCompletedOnboarding) {
+                MainActivity::class.java
+            } else {
+                OnboardingActivity::class.java
+            }
+
+            startActivity(Intent(this, nextActivity))
+            finish()
+            return
+        }
+
         setContentView(R.layout.activity_login)
 
         val tvSubtitle = findViewById<TextView>(R.id.tv_login_subtitle)
@@ -57,10 +74,6 @@ class LoginActivity : AppCompatActivity() {
             Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         tvSubtitle.text = spannableSubtitle
-
-        val sharedPref = getSharedPreferences("ClearSpacePrefs", Context.MODE_PRIVATE)
-        val stateManager = ClearSpaceStateManager(this)
-        val hasCompletedOnboarding = sharedPref.getBoolean("hasCompletedOnboarding", false)
 
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible

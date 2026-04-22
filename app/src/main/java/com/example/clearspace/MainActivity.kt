@@ -13,17 +13,21 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.clearspace.data.network.RetrofitClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.chip.Chip
 import com.google.android.material.slider.Slider
+import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Locale
 
@@ -38,9 +42,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sliderSessionLimit: Slider
     private lateinit var btnAddApp: Button
     private lateinit var btnSaveSettings: Button
+    private lateinit var btnAccount: ImageButton
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var emptyAppsContainer: LinearLayout
     private lateinit var rvBlockedApps: RecyclerView
+
+    private lateinit var accountMenuContainer: LinearLayout
+    private lateinit var tvAccountMenuName: TextView
+    private lateinit var tvAccountMenuLevel: TextView
+    private lateinit var tvAccountMenuPoints: TextView
+    private lateinit var btnLogout: Button
 
     private lateinit var chip5min: Chip
     private lateinit var chip15min: Chip
@@ -83,9 +94,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
         stateManager = ClearSpaceStateManager(this)
+        if (!stateManager.isUserLoggedIn()) {
+            goToLogin()
+            return
+        }
+
+        setContentView(R.layout.activity_main)
 
         initViews()
         setupRecyclerView()
@@ -96,13 +112,22 @@ class MainActivity : AppCompatActivity() {
         setupChips()
         setupButtons()
         setupBottomNavigation()
+        setupAccountMenu()
+        loadAccountSummary()
         updateBlockedAppsVisibility()
     }
 
     override fun onResume() {
         super.onResume()
+
+        if (!stateManager.isUserLoggedIn()) {
+            goToLogin()
+            return
+        }
+
         setupGreeting()
         loadSavedState()
+        loadAccountSummary()
         updateBlockedAppsVisibility()
         bottomNavigation.selectedItemId = R.id.nav_home
     }
@@ -117,9 +142,16 @@ class MainActivity : AppCompatActivity() {
         sliderSessionLimit = findViewById(R.id.sliderSessionLimit)
         btnAddApp = findViewById(R.id.btnAddApp)
         btnSaveSettings = findViewById(R.id.btnSaveSettings)
+        btnAccount = findViewById(R.id.btnAccount)
         bottomNavigation = findViewById(R.id.bottomNavigation)
         emptyAppsContainer = findViewById(R.id.emptyAppsContainer)
         rvBlockedApps = findViewById(R.id.rvBlockedApps)
+
+        accountMenuContainer = findViewById(R.id.accountMenuContainer)
+        tvAccountMenuName = findViewById(R.id.tvAccountMenuName)
+        tvAccountMenuLevel = findViewById(R.id.tvAccountMenuLevel)
+        tvAccountMenuPoints = findViewById(R.id.tvAccountMenuPoints)
+        btnLogout = findViewById(R.id.btnLogout)
 
         chip5min = findViewById(R.id.chip5min)
         chip15min = findViewById(R.id.chip15min)
@@ -155,8 +187,10 @@ class MainActivity : AppCompatActivity() {
             else -> "Good evening"
         }
 
+        val formattedName = formatDisplayName(stateManager.getLoggedInUserName())
         tvGreeting.text = greeting
-        tvUserName.text = formatDisplayName(stateManager.getLoggedInUserName())
+        tvUserName.text = formattedName
+        tvAccountMenuName.text = formattedName
     }
 
     private fun loadSavedState() {
@@ -300,6 +334,60 @@ class MainActivity : AppCompatActivity() {
         btnSaveSettings.setOnClickListener {
             saveSettings()
         }
+    }
+
+    private fun setupAccountMenu() {
+        btnAccount.setOnClickListener {
+            accountMenuContainer.visibility =
+                if (accountMenuContainer.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        btnLogout.setOnClickListener {
+            performLogout()
+        }
+    }
+
+    private fun loadAccountSummary() {
+        tvAccountMenuLevel.text = "Level: --"
+        tvAccountMenuPoints.text = "Points: --"
+
+        val userId = stateManager.getLoggedInUserId()
+        if (userId <= 0) return
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.api.getUserGamification(userId)
+                val data = response.gamification
+                tvAccountMenuLevel.text = "Level: ${data.level}"
+                tvAccountMenuPoints.text = "Points: ${data.points}"
+            } catch (_: Exception) {
+                tvAccountMenuLevel.text = "Level: --"
+                tvAccountMenuPoints.text = "Points: --"
+            }
+        }
+    }
+
+    private fun performLogout() {
+        val stopIntent = Intent(this, AppMonitorService::class.java).apply {
+            action = AppMonitorService.ACTION_STOP_MONITORING
+        }
+        startService(stopIntent)
+
+        stateManager.saveMonitoringSettings(false, stateManager.getTimeLimitMinutes())
+        stateManager.resetLiveSessionCountdown()
+        stateManager.resetLockState()
+        stateManager.clearBlockedApps()
+        stateManager.logoutUser()
+
+        goToLogin()
+    }
+
+    private fun goToLogin() {
+        val intent = Intent(this, LoginActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        startActivity(intent)
+        finish()
     }
 
     private fun openAppPicker() {
