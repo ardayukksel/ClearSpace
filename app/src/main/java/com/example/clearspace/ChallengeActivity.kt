@@ -445,6 +445,12 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun reportChallengeCompletionThen(onDone: () -> Unit) {
+
+        if (challengeMode == MODE_MANUAL) {
+            onDone()
+            return
+        }
+
         if (hasReportedCompletion) {
             onDone()
             return
@@ -469,11 +475,7 @@ class ChallengeActivity : AppCompatActivity() {
                 )
                 hasReportedCompletion = true
             } catch (e: Exception) {
-                Toast.makeText(
-                    this@ChallengeActivity,
-                    "Challenge completed, but reward sync failed",
-                    Toast.LENGTH_SHORT
-                ).show()
+                e.printStackTrace()
             } finally {
                 onDone()
             }
