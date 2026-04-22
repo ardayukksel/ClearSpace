@@ -43,7 +43,6 @@ class SignupActivity : AppCompatActivity() {
         val btnCreateAccount = findViewById<Button>(R.id.btn_create_account)
         val tvBackToLogin = findViewById<TextView>(R.id.tv_back_to_login)
 
-        // 🔥 Subtitle styling
         val subtitleText = "Start your digital wellbeing journey"
         val spannableSubtitle = SpannableString(subtitleText)
         val startIndex = subtitleText.indexOf("digital wellbeing")
@@ -62,7 +61,6 @@ class SignupActivity : AppCompatActivity() {
         )
         tvSubtitle.text = spannableSubtitle
 
-        // 🔥 Terms styling
         val termsText = "By creating an account, you agree to our Terms of Service and Privacy Policy."
         val spannableTerms = SpannableString(termsText)
 
@@ -99,11 +97,13 @@ class SignupActivity : AppCompatActivity() {
 
         tvTerms.text = spannableTerms
 
-        // 🔙 Navigation
         ivBack.setOnClickListener { finish() }
         tvBackToLogin.setOnClickListener { finish() }
 
-        // 👁 Password toggle
+        tvTerms.setOnClickListener {
+            startActivity(Intent(this, TermsActivity::class.java))
+        }
+
         ivTogglePassword.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
             etPassword.inputType =
@@ -113,6 +113,9 @@ class SignupActivity : AppCompatActivity() {
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
 
             etPassword.setSelection(etPassword.text.length)
+            ivTogglePassword.setImageResource(
+                if (isPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
+            )
         }
 
         ivToggleConfirmPassword.setOnClickListener {
@@ -124,9 +127,11 @@ class SignupActivity : AppCompatActivity() {
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
 
             etConfirmPassword.setSelection(etConfirmPassword.text.length)
+            ivToggleConfirmPassword.setImageResource(
+                if (isConfirmPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
+            )
         }
 
-        // 🚀 CREATE ACCOUNT
         btnCreateAccount.setOnClickListener {
             val name = etName.text.toString().trim()
             val email = etEmail.text.toString().trim()
@@ -170,7 +175,6 @@ class SignupActivity : AppCompatActivity() {
                         )
                     )
 
-                    // ✅ Save logged-in user
                     stateManager.saveLoggedInUser(
                         response.user_id,
                         response.email,
@@ -202,9 +206,11 @@ class SignupActivity : AppCompatActivity() {
 
         return trimmed
             .lowercase(Locale.getDefault())
-            .split(" ")
-            .joinToString(" ") {
-                it.replaceFirstChar { c -> c.uppercase() }
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
             }
     }
 }

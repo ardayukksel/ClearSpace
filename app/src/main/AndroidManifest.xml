@@ -47,6 +47,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".TermsActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
@@ -69,11 +73,6 @@
             android:name=".SignupActivity"
             android:exported="false" />
 
-        <activity
-            android:name=".ForgotPasswordActivity"
-            android:exported="false"
-            android:theme="@style/Theme.ClearSpace"/>
-
         <activity android:name=".ChallengePreferencesActivity" />
 
         <service
@@ -87,8 +86,8 @@
 
         <service
             android:name=".ClearSpaceAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="false">
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>

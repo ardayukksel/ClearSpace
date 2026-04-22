@@ -11,7 +11,11 @@ import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.Patterns
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.clearspace.data.network.LoginRequest
@@ -79,6 +83,9 @@ class LoginActivity : AppCompatActivity() {
                     InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
 
             etPassword.setSelection(etPassword.text.length)
+            ivTogglePassword.setImageResource(
+                if (isPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
+            )
         }
 
         btnLogin.setOnClickListener {
@@ -139,17 +146,21 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun isValidEmail(email: String) =
-        Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    private fun isValidEmail(email: String): Boolean {
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    }
 
     private fun formatDisplayName(rawName: String): String {
         val trimmed = rawName.trim()
         if (trimmed.isBlank()) return "User"
 
-        return trimmed.lowercase(Locale.getDefault())
-            .split(" ")
-            .joinToString(" ") {
-                it.replaceFirstChar { c -> c.uppercase() }
+        return trimmed
+            .lowercase(Locale.getDefault())
+            .split(Regex("\\s+"))
+            .joinToString(" ") { part ->
+                part.replaceFirstChar { char ->
+                    if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+                }
             }
     }
 }

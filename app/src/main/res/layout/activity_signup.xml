@@ -12,28 +12,27 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <!-- Header with back button and logo -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="24dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
+            android:orientation="horizontal">
 
             <ImageView
                 android:id="@+id/iv_back"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_arrow_back"
+                android:layout_marginEnd="12dp"
                 android:contentDescription="Back"
-                android:layout_marginEnd="12dp"/>
+                android:src="@drawable/ic_arrow_back" />
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@drawable/ic_clearspace_logo"
+                android:layout_marginEnd="8dp"
                 android:contentDescription="Logo"
-                android:layout_marginEnd="8dp"/>
+                android:src="@drawable/ic_clearspace_logo" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -41,17 +40,16 @@
                 android:text="ClearSpace"
                 android:textColor="#5D4037"
                 android:textSize="18sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- White Card Container -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
+            android:layout_marginBottom="24dp"
             app:cardBackgroundColor="@android:color/white"
-            android:layout_marginBottom="24dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -59,53 +57,49 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-                <!-- Title -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
                     android:text="Create Account"
                     android:textColor="#3E2723"
                     android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
-                <!-- Subtitle -->
                 <TextView
                     android:id="@+id/tv_subtitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
                     android:text="Start your digital wellbeing journey"
                     android:textColor="#8D6E63"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="24dp"/>
+                    android:textSize="14sp" />
 
-                <!-- Full Name Label -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.05"
                     android:text="FULL NAME"
                     android:textColor="#8D6E63"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.05"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
-                <!-- Full Name Input -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="16dp"
-                    android:layout_marginBottom="16dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_person"
                         android:layout_marginEnd="12dp"
-                        android:contentDescription="Name icon"/>
+                        android:contentDescription="Name icon"
+                        android:src="@drawable/ic_person" />
 
                     <EditText
                         android:id="@+id/et_signup_name"
@@ -117,36 +111,34 @@
                         android:inputType="textPersonName"
                         android:textColor="#3E2723"
                         android:textColorHint="#BCAAA4"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
                 </LinearLayout>
 
-                <!-- Email Label -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.05"
                     android:text="EMAIL"
                     android:textColor="#8D6E63"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.05"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
-                <!-- Email Input -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="16dp"
-                    android:layout_marginBottom="16dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_email"
                         android:layout_marginEnd="12dp"
-                        android:contentDescription="Email icon"/>
+                        android:contentDescription="Email icon"
+                        android:src="@drawable/ic_email" />
 
                     <EditText
                         android:id="@+id/et_signup_email"
@@ -158,36 +150,34 @@
                         android:inputType="textEmailAddress"
                         android:textColor="#3E2723"
                         android:textColorHint="#BCAAA4"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
                 </LinearLayout>
 
-                <!-- Password Label -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.05"
                     android:text="PASSWORD"
                     android:textColor="#8D6E63"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.05"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
-                <!-- Password Input -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp"
                     android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="16dp"
-                    android:layout_marginBottom="16dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_lock"
                         android:layout_marginEnd="12dp"
-                        android:contentDescription="Password icon"/>
+                        android:contentDescription="Password icon"
+                        android:src="@drawable/ic_lock" />
 
                     <EditText
                         android:id="@+id/et_signup_password"
@@ -195,47 +185,45 @@
                         android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="@null"
-                        android:hint="Min. 6 characters"
+                        android:hint="Min. 8 characters"
                         android:inputType="textPassword"
                         android:textColor="#3E2723"
                         android:textColorHint="#BCAAA4"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
 
                     <ImageView
                         android:id="@+id/iv_toggle_password"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_visibility_off"
-                        android:contentDescription="Toggle password visibility"/>
+                        android:contentDescription="Toggle password visibility"
+                        android:src="@drawable/ic_visibility_off" />
                 </LinearLayout>
 
-                <!-- Confirm Password Label -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.05"
                     android:text="CONFIRM PASSWORD"
                     android:textColor="#8D6E63"
                     android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.05"
-                    android:layout_marginBottom="8dp"/>
+                    android:textStyle="bold" />
 
-                <!-- Confirm Password Input -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
+                    android:layout_marginBottom="20dp"
                     android:background="@drawable/bg_input_field"
-                    android:paddingHorizontal="16dp"
-                    android:layout_marginBottom="20dp">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="16dp">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_lock"
                         android:layout_marginEnd="12dp"
-                        android:contentDescription="Confirm password icon"/>
+                        android:contentDescription="Confirm password icon"
+                        android:src="@drawable/ic_lock" />
 
                     <EditText
                         android:id="@+id/et_signup_confirm_password"
@@ -247,71 +235,72 @@
                         android:inputType="textPassword"
                         android:textColor="#3E2723"
                         android:textColorHint="#BCAAA4"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp" />
 
                     <ImageView
                         android:id="@+id/iv_toggle_confirm_password"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
-                        android:src="@drawable/ic_visibility_off"
-                        android:contentDescription="Toggle confirm password visibility"/>
+                        android:contentDescription="Toggle confirm password visibility"
+                        android:src="@drawable/ic_visibility_off" />
                 </LinearLayout>
 
-                <!-- Terms Checkbox -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="top">
+                    android:gravity="top"
+                    android:orientation="horizontal">
 
                     <CheckBox
                         android:id="@+id/cb_terms"
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:button="@drawable/checkbox_custom"
                         android:layout_marginEnd="8dp"
-                        android:layout_marginTop="2dp"/>
+                        android:layout_marginTop="2dp"
+                        android:button="@drawable/checkbox_custom" />
 
                     <TextView
                         android:id="@+id/tv_terms"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:lineSpacingExtra="4dp"
+                        android:padding="4dp"
                         android:text="By creating an account, you agree to our Terms of Service and Privacy Policy."
                         android:textColor="#8D6E63"
-                        android:textSize="12sp"
-                        android:lineSpacingExtra="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- Create Account Button -->
         <Button
             android:id="@+id/btn_create_account"
             android:layout_width="match_parent"
             android:layout_height="52dp"
+            android:layout_marginBottom="20dp"
             android:background="@drawable/bg_btn_brown"
             android:text="Create Account"
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
+            android:textStyle="bold" />
 
-        <!-- Login Link -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
+            android:gravity="center"
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Already have an account? "
                 android:textColor="#8D6E63"
-                android:textSize="14sp"/>
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/tv_back_to_login"
@@ -320,7 +309,7 @@
                 android:text="Log in"
                 android:textColor="#5D4037"
                 android:textSize="14sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
         </LinearLayout>
 
     </LinearLayout>
