@@ -13,6 +13,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.clearspace.data.network.CompleteChallengeRequest
+import com.example.clearspace.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -44,6 +48,8 @@ class ChallengeActivity : AppCompatActivity() {
 
     private var isUnlocking = false
     private var isRelaunchScheduled = false
+    private var hasReportedCompletion = false
+
     private val relaunchHandler = Handler(Looper.getMainLooper())
     private var countDownTimer: CountDownTimer? = null
 
@@ -76,6 +82,7 @@ class ChallengeActivity : AppCompatActivity() {
     private var holdRequiredMs = 4000L
     private var holdStartTime = 0L
     private var isHolding = false
+
     private val holdHandler = Handler(Looper.getMainLooper())
     private val holdRunnable = object : Runnable {
         override fun run() {
@@ -139,6 +146,7 @@ class ChallengeActivity : AppCompatActivity() {
         isRelaunchScheduled = false
         isUnlocking = false
         isHolding = false
+        hasReportedCompletion = false
 
         applyModeState()
         startSelectedChallenge()
@@ -186,6 +194,7 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun startSelectedChallenge() {
+        hasReportedCompletion = false
         resetDynamicViews()
         currentChallengeType = pickChallengeFromPreferences()
 
@@ -417,18 +426,67 @@ class ChallengeActivity : AppCompatActivity() {
             tvChallengeSubtitle.text = "Nice. Return to ClearSpace when you're ready."
             btnUnlock.text = "Back to ClearSpace"
             btnUnlock.setOnClickListener {
-                finishManualFocus()
+                reportChallengeCompletionThen {
+                    finishManualFocus()
+                }
             }
         } else {
             tvChallengeSubtitle.text = "Nice. You can return to your app now."
             btnUnlock.text = "Unlock App"
             btnUnlock.setOnClickListener {
-                unlockAndReturnToTargetApp()
+                reportChallengeCompletionThen {
+                    unlockAndReturnToTargetApp()
+                }
             }
         }
 
         btnUnlock.visibility = View.VISIBLE
         btnUnlock.isEnabled = true
+    }
+
+    private fun reportChallengeCompletionThen(onDone: () -> Unit) {
+        if (hasReportedCompletion) {
+            onDone()
+            return
+        }
+
+        val userId = stateManager.getLoggedInUserId()
+        if (userId <= 0) {
+            onDone()
+            return
+        }
+
+        btnUnlock.isEnabled = false
+
+        lifecycleScope.launch {
+            try {
+                RetrofitClient.api.completeChallenge(
+                    CompleteChallengeRequest(
+                        user_id = userId,
+                        challenge_id = getChallengeIdForCurrentType(),
+                        result = "completed"
+                    )
+                )
+                hasReportedCompletion = true
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@ChallengeActivity,
+                    "Challenge completed, but reward sync failed",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } finally {
+                onDone()
+            }
+        }
+    }
+
+    private fun getChallengeIdForCurrentType(): Int {
+        return when (currentChallengeType) {
+            ChallengeType.BREATHING -> 1
+            ChallengeType.RAPID_TAP -> 2
+            ChallengeType.HOLD_STILL -> 3
+            ChallengeType.SIMPLE_MATH -> 4
+        }
     }
 
     private fun enforceChallengeIfNeeded() {

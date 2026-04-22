@@ -245,6 +245,140 @@ app.get("/users/:userId/gamification", (req, res) => {
   });
 });
 
+// ================= COMPLETE CHALLENGE =================
+app.post("/user-challenges/complete", (req, res) => {
+  const { user_id, challenge_id } = req.body;
+
+  if (!user_id) {
+    return res.status(400).json({ success: false, message: "user_id is required" });
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const getUserSql = `
+    SELECT
+      user_id,
+      points,
+      level,
+      current_streak,
+      longest_streak,
+      last_streak_date
+    FROM users
+    WHERE user_id = ?
+    LIMIT 1
+  `;
+
+  db.query(getUserSql, [user_id], (getErr, getResults) => {
+    if (getErr) {
+      return res.status(500).json({ success: false, error: getErr.message });
+    }
+
+    if (getResults.length === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const user = getResults[0];
+
+    const oldPoints = user.points ?? 0;
+    const earnedPoints = 10;
+    const newPoints = oldPoints + earnedPoints;
+    const newLevel = Math.floor(newPoints / 100) + 1;
+
+    let newCurrentStreak = user.current_streak ?? 0;
+    let newLongestStreak = user.longest_streak ?? 0;
+
+    const lastStreakDate = user.last_streak_date
+      ? new Date(user.last_streak_date).toISOString().slice(0, 10)
+      : null;
+
+    if (lastStreakDate === today) {
+      // already counted today, do not increment streak again
+    } else {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+      if (lastStreakDate === yesterdayStr) {
+        newCurrentStreak += 1;
+      } else {
+        newCurrentStreak = 1;
+      }
+
+      if (newCurrentStreak > newLongestStreak) {
+        newLongestStreak = newCurrentStreak;
+      }
+    }
+
+    const updateUserSql = `
+      UPDATE users
+      SET
+        points = ?,
+        level = ?,
+        current_streak = ?,
+        longest_streak = ?,
+        last_streak_date = ?
+      WHERE user_id = ?
+    `;
+
+    db.query(
+      updateUserSql,
+      [newPoints, newLevel, newCurrentStreak, newLongestStreak, today, user_id],
+      (updateErr) => {
+        if (updateErr) {
+          return res.status(500).json({ success: false, error: updateErr.message });
+        }
+
+        if (challenge_id) {
+          const insertCompletionSql = `
+            INSERT INTO user_challenges (user_id, challenge_id, completed_at)
+            VALUES (?, ?, NOW())
+          `;
+
+          db.query(insertCompletionSql, [user_id, challenge_id], (insertErr) => {
+            if (insertErr) {
+              return res.json({
+                success: true,
+                message: "Challenge completed, but completion log was not saved",
+                gamification: {
+                  points: newPoints,
+                  level: newLevel,
+                  current_streak: newCurrentStreak,
+                  longest_streak: newLongestStreak,
+                  last_streak_date: today
+                }
+              });
+            }
+
+            return res.json({
+              success: true,
+              message: "Challenge completed",
+              gamification: {
+                points: newPoints,
+                level: newLevel,
+                current_streak: newCurrentStreak,
+                longest_streak: newLongestStreak,
+                last_streak_date: today
+              }
+            });
+          });
+        } else {
+          return res.json({
+            success: true,
+            message: "Challenge completed",
+            gamification: {
+              points: newPoints,
+              level: newLevel,
+              current_streak: newCurrentStreak,
+              longest_streak: newLongestStreak,
+              last_streak_date: today
+            }
+          });
+        }
+      }
+    );
+  });
+});
+
 app.listen(3000, "0.0.0.0", () => {
   console.log("Server is running on port 3000");
 });
