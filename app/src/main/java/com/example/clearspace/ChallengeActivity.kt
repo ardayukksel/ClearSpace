@@ -49,6 +49,7 @@ class ChallengeActivity : AppCompatActivity() {
     private var isUnlocking = false
     private var isRelaunchScheduled = false
     private var hasReportedCompletion = false
+    private var isChallengeCompleted = false
 
     private val relaunchHandler = Handler(Looper.getMainLooper())
     private var countDownTimer: CountDownTimer? = null
@@ -86,7 +87,7 @@ class ChallengeActivity : AppCompatActivity() {
     private val holdHandler = Handler(Looper.getMainLooper())
     private val holdRunnable = object : Runnable {
         override fun run() {
-            if (!isHolding) return
+            if (!isHolding || isChallengeCompleted) return
 
             val elapsed = System.currentTimeMillis() - holdStartTime
             val remaining = max(0L, holdRequiredMs - elapsed)
@@ -136,8 +137,25 @@ class ChallengeActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        challengeMode = resolveMode(intent)
         overridePendingTransition(0, 0)
+
+        val newMode = resolveMode(intent)
+
+        // If Android brings the existing locked challenge back to front
+        // (for example after swiping Home), do NOT reset progress.
+        if (
+            challengeMode == MODE_LOCKED &&
+            newMode == MODE_LOCKED &&
+            stateManager.isLocked() &&
+            stateManager.isChallengeActive() &&
+            !isUnlocking
+        ) {
+            challengeMode = newMode
+            applyModeState()
+            return
+        }
+
+        challengeMode = newMode
 
         relaunchHandler.removeCallbacksAndMessages(null)
         holdHandler.removeCallbacksAndMessages(null)
@@ -147,6 +165,7 @@ class ChallengeActivity : AppCompatActivity() {
         isUnlocking = false
         isHolding = false
         hasReportedCompletion = false
+        isChallengeCompleted = false
 
         applyModeState()
         startSelectedChallenge()
@@ -180,11 +199,6 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun applyModeState() {
-        btnUnlock.visibility = View.GONE
-        btnUnlock.isEnabled = false
-        btnUnlock.text = ""
-        btnUnlock.setOnClickListener(null)
-
         if (challengeMode == MODE_LOCKED) {
             stateManager.setChallengeActive(true)
             stopService(Intent(this, OverlayService::class.java))
@@ -195,6 +209,7 @@ class ChallengeActivity : AppCompatActivity() {
 
     private fun startSelectedChallenge() {
         hasReportedCompletion = false
+        isChallengeCompleted = false
         resetDynamicViews()
         currentChallengeType = pickChallengeFromPreferences()
 
@@ -270,6 +285,8 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun runCurrentPhase() {
+        if (isChallengeCompleted) return
+
         if (currentPhaseIndex >= phaseSequence.size) {
             finishChallengeSuccess()
             return
@@ -284,11 +301,16 @@ class ChallengeActivity : AppCompatActivity() {
         countDownTimer?.cancel()
         countDownTimer = object : CountDownTimer(currentPhase.seconds * 1000L, 1000L) {
             override fun onTick(millisUntilFinished: Long) {
+                if (isChallengeCompleted) {
+                    cancel()
+                    return
+                }
                 val secondsLeft = (millisUntilFinished / 1000L).toInt() + 1
                 tvTimer.text = secondsLeft.toString()
             }
 
             override fun onFinish() {
+                if (isChallengeCompleted) return
                 tvTimer.text = "0"
                 currentPhaseIndex++
                 runCurrentPhase()
@@ -309,6 +331,8 @@ class ChallengeActivity : AppCompatActivity() {
         btnAction.visibility = View.VISIBLE
         btnAction.text = "Tap Me"
         btnAction.setOnClickListener {
+            if (isChallengeCompleted) return@setOnClickListener
+
             tapCount++
             tvTimer.text = tapCount.toString()
             tvProgress.text = "$tapCount / $tapTarget taps"
@@ -332,6 +356,8 @@ class ChallengeActivity : AppCompatActivity() {
         btnAction.text = "Hold Me"
 
         btnAction.setOnTouchListener { _, event ->
+            if (isChallengeCompleted) return@setOnTouchListener true
+
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     if (!isHolding) {
@@ -387,6 +413,8 @@ class ChallengeActivity : AppCompatActivity() {
         btnAction.text = "Submit"
 
         btnAction.setOnClickListener {
+            if (isChallengeCompleted) return@setOnClickListener
+
             val typed = etAnswer.text.toString().trim()
 
             if (typed.isBlank()) {
@@ -411,6 +439,9 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun finishChallengeSuccess() {
+        if (isChallengeCompleted) return
+        isChallengeCompleted = true
+
         countDownTimer?.cancel()
         holdHandler.removeCallbacksAndMessages(null)
         isHolding = false
@@ -445,7 +476,6 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun reportChallengeCompletionThen(onDone: () -> Unit) {
-
         if (challengeMode == MODE_MANUAL) {
             onDone()
             return
@@ -492,7 +522,7 @@ class ChallengeActivity : AppCompatActivity() {
     }
 
     private fun enforceChallengeIfNeeded() {
-        if (isUnlocking || isRelaunchScheduled) return
+        if (isUnlocking || isRelaunchScheduled || isChallengeCompleted) return
 
         val isLocked = stateManager.isLocked()
         val isChallengeActive = stateManager.isChallengeActive()
@@ -503,7 +533,7 @@ class ChallengeActivity : AppCompatActivity() {
             relaunchHandler.postDelayed({
                 isRelaunchScheduled = false
 
-                if (!stateManager.isLocked() || !stateManager.isChallengeActive() || isUnlocking) {
+                if (!stateManager.isLocked() || !stateManager.isChallengeActive() || isUnlocking || isChallengeCompleted) {
                     return@postDelayed
                 }
 
@@ -516,7 +546,7 @@ class ChallengeActivity : AppCompatActivity() {
                     addFlags(
                         Intent.FLAG_ACTIVITY_NEW_TASK or
                                 Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
                                 Intent.FLAG_ACTIVITY_NO_ANIMATION
                     )
                 }
