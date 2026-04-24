@@ -259,10 +259,10 @@ Connected to Self_Regulation_App database
 
 ## Known Limitations
 
-- 🔓 Passwords stored in **plain text** (prototype only — no bcrypt)
-- 🔧 Permissions must be enabled **manually** by the user
-- 📱 Overlay behavior may vary by **Android version** and OEM customizations (e.g., MIUI, One UI)
-- 🌐 Backend runs **locally** — no cloud hosting
+-  Passwords stored in **plain text** (prototype only — no bcrypt)
+-  Permissions must be enabled **manually** by the user
+-  Overlay behavior may vary by **Android version** and OEM customizations (e.g., MIUI, One UI)
+-  Backend runs **locally** — no cloud hosting
 
 ---
 
